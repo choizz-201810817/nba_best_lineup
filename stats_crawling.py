@@ -82,10 +82,51 @@ for general in generals:
         df.columns = df.columns.str.lower()
         playerDfs.append(df)
 
+#%%
+# bios 크롤링
+seasons = ["1999-00", "2000-01", "2001-02", "2002-03", "2003-04", "2004-05", "2005-06"
+, "2006-07", "2007-08", "2008-09", "2009-10", "2010-11", "2011-12", "2012-13", "2013-14"
+, "2014-15", "2015-16", "2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"
+, "2022-23"]
+
+biosDfs = []
+
+driver = webdriver.Chrome()
+
+url = f"https://www.nba.com/stats/players/bio?Season="
+
+for season in seasons:
+    driver.get(url+season)
+    driver.refresh()
+    driver.implicitly_wait(15)
+    table = driver.find_element(By.XPATH, f'//*[@id="__next"]/div[2]/div[2]/div[3]/section[2]/div/div[2]/div[3]/table')
+
+    # 테이블 헤드 가져오기
+    thead = table.find_element(By.TAG_NAME, "thead")
+    head_row = thead.find_element(By.TAG_NAME, "tr")
+    cols = head_row.find_elements(By.TAG_NAME, "th")
+
+    columns = []
+    for col in cols:
+        columns.append(col.text)
+    while ('' in columns):
+        columns.remove('') # ''로 나오는 컬럼명 없애기
+
+    # 테이블 바디 가져오기
+    stats = body(driver)
+
+    df = pd.DataFrame(stats, columns=columns)
+    df["season"] = "'"+season[2:]
+    df.columns = df.columns.str.lower()
+    biosDfs.append(df)
+
 # %%
 for i, general in enumerate(generals):
     df = pd.concat(playerDfs[i*24:(i+1)*24])
     df.to_csv(f'./data/{general}/player_{general}.csv')
+
+# %%
+df = pd.concat(biosDfs).reset_index(drop=True)
 
 #%%
 # playerDfs1 = playerDfs[:24]
@@ -95,3 +136,20 @@ for i, general in enumerate(generals):
 # # %%
 # df = pd.concat(playerDfs1).reset_index(drop=True)
 # df.to_csv('./data/player_misc.csv')
+
+# %%
+def ft2cm(height=""):
+    idx = height.index('-')
+    ft = int(height[:idx])
+    inch = int(height[idx+1:])
+    cm = np.round(((ft*30.48)+(inch*2.54)), 2)
+    return cm
+
+#%%
+df = df[df.height.apply(lambda x: False if x=='' else True)].reset_index(drop=True)
+df.height = df.height.apply(lambda x: ft2cm(x))
+df.weight = df.weight.astype("float64")
+
+# %%
+df.to_csv(f'./data/player_bios.csv')
+# %%
