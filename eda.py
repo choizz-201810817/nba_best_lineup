@@ -50,9 +50,16 @@ for (root, dir, files) in os.walk(teamPath):
     for file in files:
         df = pd.read_csv(teamPath+file).drop(['Unnamed: 0', '#'], axis=1)
         cols = df.columns.str.replace('\r\n',' ')\
+            .str.replace('\n',' ')\
             .str.replace(' ', '_')\
             .str.replace('__', '_')\
             .to_list()
+        cols = listRep(cols, 'ast_ratio', 'est._ast_ratio')
+        cols = listRep(cols, 'def_rtg', 'defrtg')
+        cols = listRep(cols, 'opp_pts_off_tov', 'opp_pts_off_to')
+        cols = listRep(cols, 'opp_pts_2nd_chance', 'opp_2nd_pts')
+        cols = listRep(cols, 'opp_pts_fb', 'opp_fbps')
+        cols = listRep(cols, 'opp_pts_paint', 'opp_pitp')
         teamDict[file[5:-4]] = cols
         teamKeys.append(file[5:-4])
 
@@ -75,8 +82,10 @@ plyDf.columns = plyDf.columns.str.replace(' ','_').to_list()
 plyDf.columns.to_list()
 
 #%%
-teamDf = pd.read_csv(f"data/team_fin.csv")
-teamDf.columns = teamDf.columns.str.replace(' ','_').to_list()
+teamDf = pd.read_csv(f"data/team_fin.csv").drop(['Unnamed: 0'], axis=1)
+teamDf.columns = teamDf.columns.str.replace(' ','_')\
+            .str.replace('\n','_')\
+            .str.replace('__','_').to_list()
 teamDf.columns.to_list()
 
 #%%
@@ -99,18 +108,17 @@ plyDf['obbs'] = plyDf[['gp', 'w']].apply(lambda x: x.w/x.gp, axis=1)
 
 # %%
 # category별 컬럼명들이 전체 데이터안에 모두 존재하는지 확인
+print("<<< player >>>")
 for key in playerDict.keys():
     print(len(playerDict[key]))
     print(len(plyDf[playerDict[key]].columns))
-
+    
+print("<<< team >>>")
 for key in teamDict.keys():
     print(len(teamDict[key]))
     print(len(teamDf[teamDict[key]].columns))
     
 # %%
 plyDf[playerDict['advanced']]
-
-# %%
-plyDf[]
 
 # %%
