@@ -9,6 +9,7 @@ import os
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import MinMaxScaler
 
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
@@ -118,7 +119,58 @@ for key in teamDict.keys():
     print(len(teamDict[key]))
     print(len(teamDf[teamDict[key]].columns))
     
+
+#%%
+test = playerDict['traditional']
+test.append('pace')
+test.append('pie')
+test.append('poss')
+test
+
 # %%
-plyDf[playerDict['advanced']]
+testDf = plyDf[test]
+testDf1 = testDf[testDf['gp']>=5].iloc[:,2:]
+testDf1 = testDf1.drop(["season"],axis=1)
+testDf1
+
+# %%
+testDf1.info()
+
+#%%
+mm_sc = MinMaxScaler()
+mmDf = pd.DataFrame(mm_sc.fit_transform(testDf1), columns=testDf1.columns)
+mmDf = mmDf.drop(['w', 'l', '+/-'],axis=1)
+
+# %%
+# feature들의 상관관계 보기
+mask = np.zeros_like(mmDf.corr(), dtype=bool)
+mask[np.triu_indices_from(mask)] = True
+
+plt.figure(figsize=(12,10))
+sns.heatmap(mmDf.corr(), mask=mask, cmap='RdYlBu_r', linewidths=1)
+
+# %%
+mmDf.corr()['obbs'].sort_values(ascending=False)
+
+#%%
+X_set = mmDf.drop(['obbs'], axis=1)
+y_set = mmDf.obbs
+
+#%%
+train_X, test_X, train_y, test_y = train_test_split(X_set, y_set, test_size=.25)
+print(train_X.shape)
+print(test_X.shape)
+print(train_y.shape)
+print(test_y.shape)
+
+# %%
+xgb = XGBRegressor()
+xgb.fit(train_X, train_y)
+
+# %%
+featrue_imp = xgb.feature_importances_
+plt.figure(figsize=(15,8))
+plt.bar(train_X.columns, featrue_imp)
+plt.show()
 
 # %%
