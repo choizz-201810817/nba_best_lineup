@@ -8,8 +8,10 @@ import matplotlib.pyplot as plt
 import os
 
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
 
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
@@ -22,7 +24,34 @@ def listRep(l=[], past='', now=''):
         return l
     except:
         return l
+    
+    
+def mmSc(df):
+    df = df.drop(['player', 'team', 'season', 'position'], axis=1) # object drop
+    
+    mm_sc = MinMaxScaler()
+    mmDf = pd.DataFrame(mm_sc.fit_transform(df), columns=df.columns)
+    mmDf = mmDf.drop(['gp', 'w', 'l'],axis=1) # 타겟인 obbs(승률)을 생성할 때 사용한 컬럼들 제외
+    
+    return mmDf
+    
+    
+def featureImp(dataSet, key):
+    X = dataSet.drop(['obbs', 'position'], axis=1)
+    y = dataSet.obbs
+    model = LGBMRegressor()
+    model.fit(X, y)     
+    featrue_imp = model.feature_importances_
+    xCoor = X.columns[np.argsort(featrue_imp)[::-1]]
+    yCoor = np.sort(featrue_imp)[::-1]
 
+    plt.figure(figsize=(15,8))
+    # plt.bar(x=xCoor, y=yCoor)
+    plt.title(key)
+    sns.barplot(x=xCoor, y=yCoor)
+    plt.show()
+    
+    
 #%%
 # 데이터 출처의 카테고리별로 feature들을 대분류 진행
 playerPath = f"./data/cate/dd/players/"
@@ -43,6 +72,9 @@ for (root, dir, files) in os.walk(playerPath):
         cols = listRep(cols, 'opp_pts_off_to', 'opp_pts_off_tov')
         cols = listRep(cols, 'opp_2nd_pts', 'opp_pts_2nd_chance')
         cols = listRep(cols, 'opp_fbps', 'opp_pts_fb')
+        if (file[7:-4]=='estimated-advanced'):
+            cols.append('team')
+        cols.append('position')
         cols.append('obbs') # 승률 컬럼 추가
         playerDict[file[7:-4]] = cols
         playerKeys.append(file[7:-4])
@@ -118,59 +150,89 @@ print("<<< team >>>")
 for key in teamDict.keys():
     print(len(teamDict[key]))
     print(len(teamDf[teamDict[key]].columns))
-    
 
 #%%
-test = playerDict['traditional']
-test.append('pace')
-test.append('pie')
-test.append('poss')
-test
+# 카테고리별 데이터 생성
+plyDf1 = plyDf[plyDf['gp']>=5] # 5경기 이상 뛴 선수들만 가져옴
 
-# %%
-testDf = plyDf[test]
-testDf1 = testDf[testDf['gp']>=5].iloc[:,2:]
-testDf1 = testDf1.drop(["season"],axis=1)
-testDf1
-
-# %%
-testDf1.info()
+cateDfs = {}
+for key in playerDict.keys():
+    df = plyDf1[playerDict[key]]
+    cateDfs[key] = df
 
 #%%
-mm_sc = MinMaxScaler()
-mmDf = pd.DataFrame(mm_sc.fit_transform(testDf1), columns=testDf1.columns)
-mmDf = mmDf.drop(['w', 'l', '+/-'],axis=1)
+# 카테고리별 데이터들을 모두 정규화 진행 (feature마다 단위가 다르기 때문)
+mmDfs = {}
+for key in cateDfs.keys():
+    df = mmSc(cateDfs[key])
+    df['position'] = plyDf1.position
+    mmDfs[key] = df
 
-# %%
-# feature들의 상관관계 보기
-mask = np.zeros_like(mmDf.corr(), dtype=bool)
-mask[np.triu_indices_from(mask)] = True
+# # %%
+# # feature들의 상관관계 보기
+# mask = np.zeros_like(mmDf.corr(), dtype=bool)
+# mask[np.triu_indices_from(mask)] = True
 
-plt.figure(figsize=(12,10))
-sns.heatmap(mmDf.corr(), mask=mask, cmap='RdYlBu_r', linewidths=1)
+# plt.figure(figsize=(12,10))
+# sns.heatmap(mmDf.corr(), mask=mask, cmap='RdYlBu_r', linewidths=1)
 
-# %%
-mmDf.corr()['obbs'].sort_values(ascending=False)
+# print(mmDf.corr()['obbs'].sort_values(ascending=False))
+
 
 #%%
-X_set = mmDf.drop(['obbs'], axis=1)
-y_set = mmDf.obbs
-
-#%%
-train_X, test_X, train_y, test_y = train_test_split(X_set, y_set, test_size=.25)
-print(train_X.shape)
-print(test_X.shape)
-print(train_y.shape)
-print(test_y.shape)
-
-# %%
+# 가장 예측을 잘 하는 알고리즘 선택
+rfRg = RandomForestRegressor(warm_start=False)
+lnRg = LinearRegression()
 xgb = XGBRegressor()
-xgb.fit(train_X, train_y)
+lgbm = LGBMRegressor()
+
+models = [rfRg, lnRg, xgb, lgbm]
+
+for model in models:
+    modelName = model.__class__.__name__
+    mses = []
+    for key in mmDfs.keys():
+        X_set = mmDfs[key].drop(['obbs', 'position'], axis=1)
+        y_set = mmDfs[key].obbs
+
+        X_train, X_test, y_train, y_test = train_test_split(X_set, y_set, test_size=.25)
+            
+        model.fit(X_train, y_train)
+        pred = model.predict(X_test)
+        mse = mean_squared_error(y_test, pred)
+        mses.append(mse)
+    
+    # 7개의 카테고리에서 각 알고리즘들의 mse 평균
+    mseMean = np.round(np.mean(mses), 4)
+    print(f"<<< {modelName} >>>")
+    print("mean of mse :", mseMean)
+
+## 학습 결과
+# <<< RandomForestRegressor >>>
+# mean of mse : 0.0193
+# <<< LinearRegression >>>
+# mean of mse : 0.0211
+# <<< XGBRegressor >>>
+# mean of mse : 0.0208
+# <<< LGBMRegressor >>>
+# mean of mse : 0.0184
+
+# LGBM이 가장 예측을 잘 한 것으로 나타남
+# -> LGBM으로 feature importance를 뽑음
+
+#%%
+# 5개의 포지션이 7개의 카테고리에서 어떤 feature가 중요한지 확인
+positions = plyDf1.position.unique()
+
+posDfs = {}
+for key in mmDfs.keys():
+    for pos in positions:
+        posDfs[key+'_'+pos] = mmDfs[key][mmDfs[key].position==pos]
+
+print(posDfs.keys())
 
 # %%
-featrue_imp = xgb.feature_importances_
-plt.figure(figsize=(15,8))
-plt.bar(train_X.columns, featrue_imp)
-plt.show()
-
+for key in posDfs.keys():
+    df = posDfs[key]
+    featureImp(df, key)
 # %%
