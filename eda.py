@@ -16,6 +16,8 @@ from sklearn.metrics import mean_squared_error
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
 
+from statsmodels.stats.outliers_influence import variance_inflation_factor as vif
+
 #%%
 def listRep(l=[], past='', now=''):
     try:
@@ -27,11 +29,12 @@ def listRep(l=[], past='', now=''):
     
     
 def mmSc(df):
-    df = df.drop(['player', 'team', 'season', 'position'], axis=1) # object drop
+    df1 = df.drop(['player', 'team', 'season', 'position', 'obbs'], axis=1) # object drop / target drop
     
     mm_sc = MinMaxScaler()
-    mmDf = pd.DataFrame(mm_sc.fit_transform(df), columns=df.columns)
-    mmDf = mmDf.drop(['gp', 'w', 'l'],axis=1) # 타겟인 obbs(승률)을 생성할 때 사용한 컬럼들 제외
+    mmDf = pd.DataFrame(mm_sc.fit_transform(df1), columns=df1.columns)
+    mmDf = mmDf.drop(['gp', 'w', 'l'], axis=1) # 타겟인 obbs(승률)을 생성할 때 사용한 컬럼들 제외
+    mmDf = pd.concat([mmDf, df.obbs], axis=1) # target 다시 붙이기
     
     return mmDf
     
@@ -51,7 +54,16 @@ def featureImp(dataSet, key):
     sns.barplot(x=xCoor, y=yCoor)
     plt.show()
     
+
+def corrMap(df):
+    mask = np.zeros_like(df.corr(), dtype=bool)
+    mask[np.triu_indices_from(mask)] = True
     
+    plt.figure(figsize=(8,6))
+    sns.heatmap(df.corr(), mask=mask, cmap='RdYlBu_r', linewidths=1)
+    plt.show()
+
+
 #%%
 # 데이터 출처의 카테고리별로 feature들을 대분류 진행
 playerPath = f"./data/cate/dd/players/"
@@ -153,22 +165,33 @@ for key in teamDict.keys():
 
 #%%
 # 카테고리별 데이터 생성
-plyDf1 = plyDf[plyDf['gp']>=5] # 5경기 이상 뛴 선수들만 가져옴
+plyDf1 = plyDf[plyDf['gp']>=5].reset_index(drop=True) # 5경기 이상 뛴 선수들만 가져옴
 
 cateDfs = {}
 for key in playerDict.keys():
     df = plyDf1[playerDict[key]]
     cateDfs[key] = df
 
+
 #%%
 # 카테고리별 데이터들을 모두 정규화 진행 (feature마다 단위가 다르기 때문)
 mmDfs = {}
 for key in cateDfs.keys():
     df = mmSc(cateDfs[key])
-    df['position'] = plyDf1.position
+    df = pd.concat([df, plyDf1.position], axis=1)
     mmDfs[key] = df
 
-# # %%
+#%%
+corrMap(mmDfs['advanced'])
+
+
+#%%
+testDf = mmDfs['advanced'].drop(['obbs', 'position'], axis=1)
+VIF = pd.DataFrame()
+VIF['features'] = testDf.columns
+VIF['VIF'] = [vif(testDf, i) for i in range(testDf.shape[1])]
+VIF
+# %%
 # # feature들의 상관관계 보기
 # mask = np.zeros_like(mmDf.corr(), dtype=bool)
 # mask[np.triu_indices_from(mask)] = True
@@ -177,7 +200,6 @@ for key in cateDfs.keys():
 # sns.heatmap(mmDf.corr(), mask=mask, cmap='RdYlBu_r', linewidths=1)
 
 # print(mmDf.corr()['obbs'].sort_values(ascending=False))
-
 
 #%%
 # 가장 예측을 잘 하는 알고리즘 선택
@@ -235,4 +257,16 @@ print(posDfs.keys())
 for key in posDfs.keys():
     df = posDfs[key]
     featureImp(df, key)
+    
+# %%
+impDf = pd.read_excel(r"./data/etc/feature_importance.xlsx")
+
+featImpUni = []
+for pos in impDf.columns:
+    features = pd.DataFrame(impDf[pos].unique())
+    featImpUni.append(features)
+
+featureImpDf = pd.concat(featImpUni, axis=1)
+featureImpDf.columns = impDf.columns
+featureImpDf.to_csv("./data/etc/feature_imp_unique.csv")
 # %%
