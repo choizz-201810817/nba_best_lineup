@@ -10,7 +10,7 @@ import os
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.metrics import mean_squared_error
 
 from xgboost import XGBRegressor
@@ -39,14 +39,21 @@ def mmSc(df):
     return mmDf
     
     
-def featureImp(dataSet, key):
-    X = dataSet.drop(['obbs', 'position'], axis=1)
-    y = dataSet.obbs
-    model = LGBMRegressor()
-    model.fit(X, y)     
-    featrue_imp = model.feature_importances_
-    xCoor = X.columns[np.argsort(featrue_imp)[::-1]]
-    yCoor = np.sort(featrue_imp)[::-1]
+def featureImp(dataSet, key, model, target=''):
+    if target=='obbs':
+        X = dataSet.drop([target, 'position'], axis=1)
+        y = dataSet[target]
+        model.fit(X, y)   
+        featrue_imp = model.feature_importances_
+        xCoor = X.columns[np.argsort(featrue_imp)[::-1]]
+        yCoor = np.sort(featrue_imp)[::-1]
+    else:
+        X = dataSet.drop([target, 'obbs'], axis=1)
+        y = dataSet[target]
+        model.fit(X, y)   
+        featrue_imp = model.feature_importances_
+        xCoor = X.columns[np.argsort(featrue_imp)[::-1]]
+        yCoor = np.sort(featrue_imp)[::-1]
 
     plt.figure(figsize=(15,8))
     # plt.bar(x=xCoor, y=yCoor)
@@ -62,6 +69,14 @@ def corrMap(df):
     plt.figure(figsize=(8,6))
     sns.heatmap(df.corr(), mask=mask, cmap='RdYlBu_r', linewidths=1)
     plt.show()
+
+
+def checkVif(df):
+    testDf = df.drop(['obbs', 'position'], axis=1)
+    VIF = pd.DataFrame()
+    VIF['features'] = testDf.columns
+    VIF['VIF'] = [vif(testDf, i) for i in range(testDf.shape[1])]
+    return VIF
 
 
 #%%
@@ -182,24 +197,17 @@ for key in cateDfs.keys():
     mmDfs[key] = df
 
 #%%
-corrMap(mmDfs['advanced'])
-
+for key in mmDfs.keys():
+    corrMap(mmDfs[key])
 
 #%%
-testDf = mmDfs['advanced'].drop(['obbs', 'position'], axis=1)
-VIF = pd.DataFrame()
-VIF['features'] = testDf.columns
-VIF['VIF'] = [vif(testDf, i) for i in range(testDf.shape[1])]
-VIF
-# %%
-# # feature들의 상관관계 보기
-# mask = np.zeros_like(mmDf.corr(), dtype=bool)
-# mask[np.triu_indices_from(mask)] = True
+vifs = []
+for key in mmDfs.keys():
+    vifDf = checkVif(mmDfs[key])
+    vifs.append(vifDf)
 
-# plt.figure(figsize=(12,10))
-# sns.heatmap(mmDf.corr(), mask=mask, cmap='RdYlBu_r', linewidths=1)
-
-# print(mmDf.corr()['obbs'].sort_values(ascending=False))
+#%%
+vifs
 
 #%%
 # 가장 예측을 잘 하는 알고리즘 선택
@@ -256,7 +264,8 @@ print(posDfs.keys())
 # %%
 for key in posDfs.keys():
     df = posDfs[key]
-    featureImp(df, key)
+    model = LGBMRegressor()
+    featureImp(df, key, model)
     
 # %%
 impDf = pd.read_excel(r"./data/etc/feature_importance.xlsx")
@@ -269,4 +278,11 @@ for pos in impDf.columns:
 featureImpDf = pd.concat(featImpUni, axis=1)
 featureImpDf.columns = impDf.columns
 featureImpDf.to_csv("./data/etc/feature_imp_unique.csv")
+
+# %%
+rfClf = RandomForestClassifier()
+for key in mmDfs.keys():
+    df = mmDfs[key]
+    model = RandomForestClassifier()
+    featureImp(df, key, model, target='position')
 # %%
