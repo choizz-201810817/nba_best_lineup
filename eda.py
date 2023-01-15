@@ -262,10 +262,11 @@ for key in mmDfs.keys():
 print(posDfs.keys())
 
 # %%
+# feature importance about the obbs
 for key in posDfs.keys():
     df = posDfs[key]
     model = LGBMRegressor()
-    featureImp(df, key, model)
+    featureImp(df, key, model, target='obbs')
     
 # %%
 impDf = pd.read_excel(r"./data/etc/feature_importance.xlsx")
@@ -280,11 +281,12 @@ featureImpDf.columns = impDf.columns
 featureImpDf.to_csv("./data/etc/feature_imp_unique.csv")
 
 # %%
+# feature importance about the position
 rfClf = RandomForestClassifier()
 for key in mmDfs.keys():
     df = mmDfs[key]
     model = RandomForestClassifier()
     featureImp(df, key, model, target='position')
 
-    
+
 # %%
