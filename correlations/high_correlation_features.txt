@@ -1,0 +1,7 @@
+advanced - 'poss', 'ast_ratio', 'reb%', '%ts'
+defense - 'opp_pts_paint', 'opp_pts_fb', 'opp_pts_2nd_chance', 'opp_pts_off_tov', 'stl', 'dreb', '%dreb', '%blk'
+estimated-advanced - 'est._netrtg', 'est._reb%'
+misc - 'opp_pitp', 'opp_pts_fb', 'opp_pts_2nd_chance', 'opp_pts_off_tov', 'pitp', 'fbps', 'pts_off_to', 'blka', 'opp_pitp'
+scoring - '%pts_pitp', '%pts_2pt', '%fga_3pt', 'fgm_%uast', 'fgm_%ast', '2fgm_%uast'
+traditional - 'fp', 'stl', 'tov', 'dreb', 'fta', 'ftm', 'fga', 'fgm', 'pts', '3pa', 'reb', 'dreb', 'dd2', 'blk'
+usage - '%pts', '%ftm', '%fga', '%fgm', '%3pa', '%oreb', '%reb', '%dreb'

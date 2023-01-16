@@ -62,12 +62,14 @@ def featureImp(dataSet, key, model, target=''):
     plt.show()
     
 
-def corrMap(df):
+def corrMap(df, key=''):
+    df = df.drop(['obbs'], axis=1)
     mask = np.zeros_like(df.corr(), dtype=bool)
     mask[np.triu_indices_from(mask)] = True
     
-    plt.figure(figsize=(8,6))
-    sns.heatmap(df.corr(), mask=mask, cmap='RdYlBu_r', linewidths=1)
+    plt.figure(figsize=(12,10))
+    plt.title(key)
+    sns.heatmap(df.corr(), mask=mask, cmap='RdYlBu_r', linewidths=1, annot=True)
     plt.show()
 
 
@@ -198,7 +200,7 @@ for key in cateDfs.keys():
 
 #%%
 for key in mmDfs.keys():
-    corrMap(mmDfs[key])
+    corrMap(mmDfs[key], key)
 
 #%%
 vifs = []
