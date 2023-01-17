@@ -275,21 +275,19 @@ for key in posDfs.keys():
     model = LGBMRegressor()
     featureImp(df, key, model, target='obbs')
 
+# # %%
+# impDf = pd.read_excel(r"./data/etc/feature_importance.xlsx")
 
-##### 카테고리별 전처리 끝 #####
-# %%
-impDf = pd.read_excel(r"./data/etc/feature_importance.xlsx")
+# featImpUni = []
+# for pos in impDf.columns:
+#     features = pd.DataFrame(impDf[pos].unique())
+#     featImpUni.append(features)
 
-featImpUni = []
-for pos in impDf.columns:
-    features = pd.DataFrame(impDf[pos].unique())
-    featImpUni.append(features)
+# featureImpDf = pd.concat(featImpUni, axis=1)
+# featureImpDf.columns = impDf.columns
+# featureImpDf.to_csv("./data/etc/feature_imp_unique.csv")
 
-featureImpDf = pd.concat(featImpUni, axis=1)
-featureImpDf.columns = impDf.columns
-featureImpDf.to_csv("./data/etc/feature_imp_unique.csv")
 
-# %%
 ##### 포지션 target의 feature importance #####
 # # feature importance about the position
 # rfClf = RandomForestClassifier()
@@ -298,21 +296,26 @@ featureImpDf.to_csv("./data/etc/feature_imp_unique.csv")
 #     model = RandomForestClassifier()
 #     featureImp(df, key, model, target='position')
 
+##### 카테고리별 전처리 끝 #####
 
 # %%
 ##### margin을 target으로 한 feature importance 추출하기 #####
-nonCorrCols = ['player', 'offrtg', 'defrtg', 'netrtg', 'ast/to', 'oreb%', 'dreb%', 'to_ratio', 'ts%', 'pace', 'pie', 'poss',\
-    'dreb', 'stl%', f'%blk', 'def_ws',\
-    'fbps', 'pitp', 'blk', 'pf', 'pfd',\
-    f'%fga_2pt', '%pts_2pt_mr', '%pts_3pt', '%pts_fbps', '%pts_ft', '%pts_offto', f'2fgm_%uast', f'3fgm_%uast',\
-    'fg%', '3p%', 'ft%',\
-    '%3pm', f'%fta', f'%reb', f'%ast', '%tov', '%pf', '%pfd', '%pts',\
-    'weight', 'height', 'age', 'position', 'inflation_salary', 'season', 'obbs', '+/-']
+##### 카테고리에서 상관관계 분석을 통해 추출한 feature들로만 진행 #####
+##### est는 추정치 스탯으로서 예측에 의미가 없고 복잡도만 높인다고 판단 -> 제거함 #####
+nonCorrCols = ['player', 'defrtg', 'netrtg', 'ast/to', 'oreb%', 'dreb%', 'to_ratio', 'ts%', 'pace', 'pie', 'poss',\
+    'stl%', f'%blk', 'def_ws',\
+    'fbps', 'pitp', 'pf',\
+    '%pts_2pt_mr', '%pts_fbps', '%pts_ft', '%pts_offto', f'2fgm_%uast', f'3fgm_%uast',\
+    'ft%', '3p%', \
+    '%3pm', f'%fta', f'%ast', '%tov', '%pf', '%pfd', '%pts',\
+    'height', 'age', 'position', 'inflation_salary', 'season', 'obbs', '+/-']
 # 'est._offrtg', 'est._defrtg', 'est._ast_ratio', 'est._oreb%', 'est._dreb%', 'est._to_ratio', 'est._usg%', 'est._pace',\
+#  'blk', 'pfd', f'%reb', 'fg%', 'weight', 'dreb', 'offrtg', , f'%fga_2pt', '%pts_3pt'
 
 nonCorrDf = plyDf1[nonCorrCols]
 nonCorrDf['season'] = nonCorrDf['season'].apply(lambda x: '20'+x[-2:])
 nonCorrDf
+
 # %%
 nonCorrDf.to_csv("./nonCorr.csv")
 
@@ -326,8 +329,6 @@ nonCorrDf1 = nonCorrDf.drop(['player', 'position', 'inflation_salary', 'season',
 mm_sc = MinMaxScaler()
 mmNonCorrDf = pd.DataFrame(mm_sc.fit_transform(nonCorrDf1), columns=nonCorrDf1.columns)
 mmNonCorrDf
-# %%
-checkVif(mmNonCorrDf).to_csv('./vif.csv')
 
 #%%
 mmNonCorrDf1 = pd.concat([mmNonCorrDf, nonCorrDf[['position', '+/-']]], axis=1)
@@ -346,12 +347,10 @@ for col in cols:
     corrList.append(temp)
     
 #%%
+# 각 feature별로 상관관계가 높은 순서대로 정렬한 dataframe을 csv로 저장
 for col, df in zip(cols, corrList):
     col1 = col.replace('/','_')
     df.to_csv(f'./{col1}.csv')
-
-#%%
-corrList[3]
 
 # %%
 rfRg = RandomForestRegressor(warm_start=False)
