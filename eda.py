@@ -40,7 +40,7 @@ def mmSc(df):
     
     
 def featureImp(dataSet, key, model, target=''):
-    if target=='obbs':
+    if (target=='obbs') or (target=='+/-'):
         X = dataSet.drop([target, 'position'], axis=1)
         y = dataSet[target]
         model.fit(X, y)   
@@ -55,7 +55,7 @@ def featureImp(dataSet, key, model, target=''):
         xCoor = X.columns[np.argsort(featrue_imp)[::-1]]
         yCoor = np.sort(featrue_imp)[::-1]
 
-    plt.figure(figsize=(15,8))
+    plt.figure(figsize=(30,18))
     # plt.bar(x=xCoor, y=yCoor)
     plt.title(key)
     sns.barplot(x=xCoor, y=yCoor)
@@ -67,17 +67,20 @@ def corrMap(df, key=''):
     mask = np.zeros_like(df.corr(), dtype=bool)
     mask[np.triu_indices_from(mask)] = True
     
-    plt.figure(figsize=(12,10))
+    plt.figure(figsize=(20,17))
     plt.title(key)
     sns.heatmap(df.corr(), mask=mask, cmap='RdYlBu_r', linewidths=1, annot=True)
     plt.show()
 
 
 def checkVif(df):
-    testDf = df.drop(['obbs', 'position'], axis=1)
+    # testDf = df.drop(['obbs', 'position'], axis=1)
+    # VIF = pd.DataFrame()
+    # VIF['features'] = testDf.columns
+    # VIF['VIF'] = [vif(testDf, i) for i in range(testDf.shape[1])]
     VIF = pd.DataFrame()
-    VIF['features'] = testDf.columns
-    VIF['VIF'] = [vif(testDf, i) for i in range(testDf.shape[1])]
+    VIF['features'] = df.columns
+    VIF['VIF'] = [vif(df, i) for i in range(df.shape[1])]
     return VIF
 
 
@@ -181,8 +184,10 @@ for key in teamDict.keys():
     print(len(teamDf[teamDict[key]].columns))
 
 #%%
+##### 카테고리별 eda 진행 #####
 # 카테고리별 데이터 생성
-plyDf1 = plyDf[plyDf['gp']>=5].reset_index(drop=True) # 5경기 이상 뛴 선수들만 가져옴
+# plyDf1 = plyDf[plyDf['gp']>=5].reset_index(drop=True) # 5경기 이상 뛴 선수들만 가져옴
+plyDf1 = plyDf.reset_index(drop=True)
 
 cateDfs = {}
 for key in playerDict.keys():
@@ -269,7 +274,9 @@ for key in posDfs.keys():
     df = posDfs[key]
     model = LGBMRegressor()
     featureImp(df, key, model, target='obbs')
-    
+
+
+##### 카테고리별 전처리 끝 #####
 # %%
 impDf = pd.read_excel(r"./data/etc/feature_importance.xlsx")
 
@@ -283,12 +290,105 @@ featureImpDf.columns = impDf.columns
 featureImpDf.to_csv("./data/etc/feature_imp_unique.csv")
 
 # %%
-# feature importance about the position
-rfClf = RandomForestClassifier()
-for key in mmDfs.keys():
-    df = mmDfs[key]
-    model = RandomForestClassifier()
-    featureImp(df, key, model, target='position')
+##### 포지션 target의 feature importance #####
+# # feature importance about the position
+# rfClf = RandomForestClassifier()
+# for key in mmDfs.keys():
+#     df = mmDfs[key]
+#     model = RandomForestClassifier()
+#     featureImp(df, key, model, target='position')
 
+
+# %%
+##### margin을 target으로 한 feature importance 추출하기 #####
+nonCorrCols = ['player', 'offrtg', 'defrtg', 'netrtg', 'ast/to', 'oreb%', 'dreb%', 'to_ratio', 'ts%', 'pace', 'pie', 'poss',\
+    'dreb', 'stl%', f'%blk', 'def_ws',\
+    'fbps', 'pitp', 'blk', 'pf', 'pfd',\
+    f'%fga_2pt', '%pts_2pt_mr', '%pts_3pt', '%pts_fbps', '%pts_ft', '%pts_offto', f'2fgm_%uast', f'3fgm_%uast',\
+    'fg%', '3p%', 'ft%',\
+    '%3pm', f'%fta', f'%reb', f'%ast', '%tov', '%pf', '%pfd', '%pts',\
+    'weight', 'height', 'age', 'position', 'inflation_salary', 'season', 'obbs', '+/-']
+# 'est._offrtg', 'est._defrtg', 'est._ast_ratio', 'est._oreb%', 'est._dreb%', 'est._to_ratio', 'est._usg%', 'est._pace',\
+
+nonCorrDf = plyDf1[nonCorrCols]
+nonCorrDf['season'] = nonCorrDf['season'].apply(lambda x: '20'+x[-2:])
+nonCorrDf
+# %%
+nonCorrDf.to_csv("./nonCorr.csv")
+
+# %%
+nonCorrDf.season = nonCorrDf.season.astype('int')
+nonCorrDf.info()
+
+#%%
+nonCorrDf1 = nonCorrDf.drop(['player', 'position', 'inflation_salary', 'season', '+/-'], axis=1)
+
+mm_sc = MinMaxScaler()
+mmNonCorrDf = pd.DataFrame(mm_sc.fit_transform(nonCorrDf1), columns=nonCorrDf1.columns)
+mmNonCorrDf
+# %%
+checkVif(mmNonCorrDf).to_csv('./vif.csv')
+
+#%%
+mmNonCorrDf1 = pd.concat([mmNonCorrDf, nonCorrDf[['position', '+/-']]], axis=1)
+mmNonCorrDf1
+
+# %%
+corrMap(mmNonCorrDf1, key='nonCorr')
+
+#%%
+mmTemp = mmNonCorrDf1.drop(['position'], axis=1)
+cols = mmTemp.columns
+
+corrList = []
+for col in cols:
+    temp = pd.DataFrame(mmTemp.corr()[col].sort_values(ascending=False))
+    corrList.append(temp)
+    
+#%%
+for col, df in zip(cols, corrList):
+    col1 = col.replace('/','_')
+    df.to_csv(f'./{col1}.csv')
+
+#%%
+corrList[3]
+
+# %%
+rfRg = RandomForestRegressor(warm_start=False)
+lnRg = LinearRegression()
+xgb = XGBRegressor()
+lgbm = LGBMRegressor()
+
+models = [rfRg, lnRg, xgb, lgbm]
+
+for model in models:
+    modelName = model.__class__.__name__
+    X_set = mmNonCorrDf1.drop(['+/-', 'position'], axis=1)
+    y_set = mmNonCorrDf1['+/-']
+    X_train, X_test, y_train, y_test = train_test_split(X_set, y_set, test_size=0.25, random_state=25)
+    
+    model.fit(X_train, y_train)
+    pred = model.predict(X_test)
+    rmse = np.round(np.sqrt(mean_squared_error(y_test, pred)), 4)
+    print(f"<<<<< {modelName} >>>>>")
+    print("rmse :", rmse)
+    
+## LightGBM의 예측 결과가 가장 좋게 나옴.
+# <<<<< RandomForestRegressor >>>>>
+# rmse : 0.516
+# <<<<< LinearRegression >>>>>
+# rmse : 1.2901
+# <<<<< XGBRegressor >>>>>
+# rmse : 0.4815
+# <<<<< LGBMRegressor >>>>>
+# rmse : 0.4394
+
+# %%
+positions = mmNonCorrDf1.position.unique()
+
+for pos in positions:
+    model = LGBMRegressor()
+    dataSet = mmNonCorrDf1[mmNonCorrDf1.position==pos]
+    featureImp(dataSet=dataSet, key=pos, model=model, target='+/-')
 
 # %%
