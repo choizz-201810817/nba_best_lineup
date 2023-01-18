@@ -150,6 +150,7 @@ plyDf.columns.to_list()
 teamDf = pd.read_csv(f"data/team_fin.csv").drop(['Unnamed: 0'], axis=1)
 teamDf.columns = teamDf.columns.str.replace(' ','_')\
             .str.replace('\n','_')\
+            .str.replace('\r','')\
             .str.replace('__','_').to_list()
 teamDf.columns.to_list()
 
@@ -170,6 +171,9 @@ print(plyDf.position.value_counts())
 
 # 승률 컬럼 추가
 plyDf['obbs'] = plyDf[['gp', 'w']].apply(lambda x: x.w/x.gp, axis=1)
+
+#%%
+teamDf.columns.to_list()
 
 # %%
 # category별 컬럼명들이 전체 데이터안에 모두 존재하는지 확인
@@ -337,20 +341,20 @@ mmNonCorrDf1
 # %%
 corrMap(mmNonCorrDf1, key='nonCorr')
 
-#%%
-mmTemp = mmNonCorrDf1.drop(['position'], axis=1)
-cols = mmTemp.columns
+# #%%
+# mmTemp = mmNonCorrDf1.drop(['position'], axis=1)
+# cols = mmTemp.columns
 
-corrList = []
-for col in cols:
-    temp = pd.DataFrame(mmTemp.corr()[col].sort_values(ascending=False))
-    corrList.append(temp)
-    
-#%%
-# 각 feature별로 상관관계가 높은 순서대로 정렬한 dataframe을 csv로 저장
-for col, df in zip(cols, corrList):
-    col1 = col.replace('/','_')
-    df.to_csv(f'./{col1}.csv')
+# corrList = []
+# for col in cols:
+#     temp = pd.DataFrame(mmTemp.corr()[col].sort_values(ascending=False))
+#     corrList.append(temp)
+
+# #%%
+# # 각 feature별로 상관관계가 높은 순서대로 정렬한 dataframe을 csv로 저장
+# for col, df in zip(cols, corrList):
+#     col1 = col.replace('/','_')
+#     df.to_csv(f'./{col1}.csv')
 
 # %%
 rfRg = RandomForestRegressor(warm_start=False)
@@ -391,3 +395,7 @@ for pos in positions:
     featureImp(dataSet=dataSet, key=pos, model=model, target='+/-')
 
 # %%
+model = LGBMRegressor()
+featureImp(dataSet=dataSet, key='total', model=model, target='+/-')
+
+#%%
