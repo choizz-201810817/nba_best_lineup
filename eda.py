@@ -7,17 +7,22 @@ import matplotlib.pyplot as plt
 
 import os
 
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
+from sklearn.inspection import permutation_importance
+from sklearn.preprocessing import MinMaxScaler
 
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
 
 from statsmodels.stats.outliers_influence import variance_inflation_factor as vif
 
+import shap
+
+# import eli5
+# from eli5.sklearn import PermutationImportance
 #%%
 def listRep(l=[], past='', now=''):
     try:
@@ -61,6 +66,7 @@ def featureImp(dataSet, key, model, target=''):
     sns.barplot(x=xCoor, y=yCoor)
     plt.show()
     
+    return xCoor, yCoor
 
 def corrMap(df, key=''):
     df = df.drop(['obbs'], axis=1)
@@ -82,6 +88,20 @@ def checkVif(df):
     VIF['features'] = df.columns
     VIF['VIF'] = [vif(df, i) for i in range(df.shape[1])]
     return VIF
+
+
+def perImp(df, pos, model):
+    dataSet = df[df.position==pos]
+    X = dataSet.drop(['position', '+/-'], axis=1)
+    y = dataSet['+/-']
+    model.fit(X,y)
+    result = permutation_importance(model, X, y, n_repeats=30, random_state=0)
+    sorted_result = result.importances_mean.argsort()
+    features = X.columns[sorted_result]
+    impoDf = pd.DataFrame(result.importances_mean[sorted_result], index=features, columns=['feature_importance']).\
+        sort_values('feature_importance', ascending=False)
+
+    return impoDf
 
 
 #%%
@@ -179,13 +199,17 @@ teamDf.columns.to_list()
 # category별 컬럼명들이 전체 데이터안에 모두 존재하는지 확인
 print("<<< player >>>")
 for key in playerDict.keys():
-    print(len(playerDict[key]))
-    print(len(plyDf[playerDict[key]].columns))
+    if (len(playerDict[key])==len(plyDf[playerDict[key]].columns)):
+        print(f"{key}의 컬럼 모두 존재")
+    else:
+        print(f"{key}의 컬럼 불일치")
     
 print("<<< team >>>")
 for key in teamDict.keys():
-    print(len(teamDict[key]))
-    print(len(teamDf[teamDict[key]].columns))
+    if (len(teamDict[key])==len(teamDf[teamDict[key]].columns)):
+        print(f"{key}의 컬럼 모두 존재")
+    else:
+        print(f"{key}의 컬럼 불일치")
 
 #%%
 ##### 카테고리별 eda 진행 #####
@@ -387,15 +411,67 @@ for model in models:
 # rmse : 0.4394
 
 # %%
+## feature importances by positions
 positions = mmNonCorrDf1.position.unique()
+columnList = []
+importances = []
 
 for pos in positions:
     model = LGBMRegressor()
     dataSet = mmNonCorrDf1[mmNonCorrDf1.position==pos]
-    featureImp(dataSet=dataSet, key=pos, model=model, target='+/-')
+    cols, imps = featureImp(dataSet=dataSet, key=pos, model=model, target='+/-')
+    columnList.append(cols)
+    importances.append(imps)
 
 # %%
+## total feature importances
 model = LGBMRegressor()
 featureImp(dataSet=dataSet, key='total', model=model, target='+/-')
 
+# %%
+##### LGBMRegressor의 parameter 튜닝 #####
+X = mmNonCorrDf1.drop(['position', '+/-'], axis=1)
+y = mmNonCorrDf1['+/-']
+
+model = LGBMRegressor()
+
+params = {"learning_rate" : [0.001, 0.01, 0.1, 0.3, 0.5],
+          "max_depth" : [25, 50, 75],
+          "n_estimators" : [100, 300, 500]}
+
+gscv = GridSearchCV(estimator=model, param_grid=params, scoring='neg_mean_squared_error', cv=3, verbose=2)
+gscv.fit(X, y)
+
+# %%
+print(gscv.best_estimator_)
+print(gscv.best_score_)
+
+### best estimator : max_depth=25 / n_estimators = 300 ###
+
 #%%
+##### shap 을 통해 feature importance 추출 #####
+# lgbm의 dataset 생성
+
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=.25, random_state=25)
+
+# lgbm 학습
+lgbm = LGBMRegressor(max_depth=25, n_estimators=300)
+lgbm.fit(X_train, y_train)
+pred = lgbm.predict(X_val)
+print(np.round(np.sqrt(mean_squared_error(y_val, pred)), 4))
+
+# %%
+explainer = shap.TreeExplainer(lgbm)
+shap_values = explainer.shap_values(X_val)
+# %%
+shap.summary_plot(shap_values, X_val)
+# %%
+shap.initjs()
+shap.force_plot(explainer.expected_value, shap_values[1,:], X_val.iloc[1,:])
+# %%
+shap.force_plot(explainer.expected_value, shap_values, X_val) 
+# %%
+shap.summary_plot(shap_values, X_val, plot_type = "bar")
+# %%
+
+# %%
