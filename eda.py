@@ -475,3 +475,13 @@ shap.summary_plot(shap_values, X_val, plot_type = "bar")
 # %%
 
 # %%
+nonCorrDf
+# %%
+positions = nonCorrDf.position.unique()
+
+for pos in positions:
+    df = nonCorrDf[nonCorrDf['position'=='C']]
+    df['new'] = -(2.37*df.age) + (2.05*df.netrtg) + (1.80*df.pitp) + (1.27*df.def_ws) + (1.17*df.poss) - (0.81*df['%pf']) - (0.57*df.defrtg) + (0.55*df['%pts']) - (0.47*df.pf) + (0.37*df['dreb%']) + (0.30*df['%pts_fbps']) + (0.06*df.obbs) + (0.04*df.pie) + (0.03*df['oreb%'])
+
+# %%
+
