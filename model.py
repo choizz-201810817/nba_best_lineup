@@ -38,3 +38,5 @@ salDf = salDf.rename(columns={'inflation_salary_x' : 'present_salary', 'inflatio
 salDf
 
 # %%
+df.isna().sum()
+# %%

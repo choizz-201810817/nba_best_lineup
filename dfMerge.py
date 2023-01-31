@@ -107,40 +107,99 @@ salDf.columns = salDf.columns.str.lower()
 salDf.rename(columns={"name":"player"}, inplace=True)
 
 #%%
+salDf.season = salDf.season.apply(lambda x: '20'+x[-2:])
+salDf.season
+
+#%%
+playerDf.season = playerDf.season.apply(lambda x: '20'+x[-2:])
+playerDf.season
+
+#%%
 biosDf = pd.read_csv(f"./data/player_bios.csv").drop(["Unnamed: 0"], axis=1)
+biosDf.season = biosDf.season.apply(lambda x: '20'+x[-2:])
+biosDf.season
 
 # %%
-seasons1 = ["'99-00", "'00-01", "'01-02", "'02-03", "'03-04", "'04-05", "'05-06"
-, "'06-07", "'07-08", "'08-09", "'09-10", "'10-11", "'11-12", "'12-13", "'13-14"
-, "'14-15", "'15-16", "'16-17", "'17-18", "'18-19", "'19-20", "'20-21", "'21-22"
-, "'22-23"]
+# seasons1 = ["'99-00", "'00-01", "'01-02", "'02-03", "'03-04", "'04-05", "'05-06"
+# , "'06-07", "'07-08", "'08-09", "'09-10", "'10-11", "'11-12", "'12-13", "'13-14"
+# , "'14-15", "'15-16", "'16-17", "'17-18", "'18-19", "'19-20", "'20-21", "'21-22"
+# , "'22-23"]
 
-seasons2 = ["99-00", "00-01", "01-02", "02-03", "03-04", "04-05", "05-06"
-, "06-07", "07-08", "08-09", "09-10", "10-11", "11-12", "12-13", "13-14"
-, "14-15", "15-16", "16-17", "17-18", "18-19", "19-20", "20-21", "21-22"
-, "22-23"]
+# seasons2 = ["99-00", "00-01", "01-02", "02-03", "03-04", "04-05", "05-06"
+# , "06-07", "07-08", "08-09", "09-10", "10-11", "11-12", "12-13", "13-14"
+# , "14-15", "15-16", "16-17", "17-18", "18-19", "19-20", "20-21", "21-22"
+# , "22-23"]
 
 #%%
 biosDf = biosDf[['player', 'team', 'age', 'height', 'weight', 'season']]
 biosDf
 
 #%%
-mdf1 = pd.merge(playerDf, biosDf, on=["player", "team", "age", "season"])
+mdf = pd.merge(playerDf, biosDf, on=["player", "team", "age", "season"])
+mdf
+
+#%%
+# dfs1 = []
+# for season1, season2 in zip(seasons1, seasons2):
+#     mdf = pd.merge(mdf1[mdf1["season"]==season1], salDf[salDf["season"]==season2], on="player", how="inner")
+#     dfs1.append(mdf)
+
+mdf1 = pd.merge(mdf, salDf, on=["player", "season"], how="inner")
+mdf1
+
+# %%
+mdf1.drop(["#", "salary", "rank"], axis=1, inplace=True)
+mdf1 = mdf1.reset_index(drop=True)
 mdf1
 
 #%%
-dfs1 = []
-for season1, season2 in zip(seasons1, seasons2):
-    mdf = pd.merge(mdf1[mdf1["season"]==season1], salDf[salDf["season"]==season2], on="player", how="inner")
-    dfs1.append(mdf)
+# df.to_csv('./data/player_fin.csv')
 
 # %%
-df = pd.concat(dfs1).reset_index(drop=True)
-df.drop(["#", "team_x", "season_y", "salary", "rank"], axis=1, inplace=True)
-df.rename(columns={"season_x":"season", "team_y":"team"}, inplace=True)
-df = df.reset_index(drop=True)
-df
+mdf1.team_y = mdf1.team_y.apply(lambda x: 'Los Angeles Clippers' if x=='LA Clippers' else x)
+
 #%%
-df.to_csv('./data/player_fin.csv')
+print(mdf1.team_y.unique())
+print(mdf1.team_x.unique())
+
+#%%
+## 이니셜로 되어있는 팀명을 풀네임으로 변경
+def teamReplace(x='', team_x=[], team_y=[]):
+    idx = team_x.index(x)
+    return team_y[idx]
+
+#%%
+team_x = mdf1.team_x.unique().tolist()
+team_y = mdf1.team_y.unique().tolist()
+
+#%%
+mdf1.team_x = mdf1.team_x.apply(lambda x: teamReplace(x, team_x=team_x, team_y=team_y))
+mdf1.team_x.unique()
+
+#%%
+## 팀명이 바뀐 팀의 이름을 현재 팀명으로 통일
+def changedTeam(x=''):
+    if x=='New Jersey Nets':
+        return 'Brooklyn Nets'
+    elif x=='New Orleans Hornets':
+        return 'New Orleans Pelicans'
+    elif x=='Charlotte Bobcats':
+        return 'Charlotte Hornets'
+    elif x=='Vancouver Grizzlies':
+        return 'Memphis Grizzlies'
+    elif x=='NO/Oklahoma City Hornets':
+        return 'New Orleans Pelicans'
+    else:
+        return x
+
+mdf1.team_x = mdf1.team_x.apply(lambda x: changedTeam(x))
+mdf1.team_x.unique()
+
+#%%
+len(mdf1.team_x.unique())
+
+# %%
+mdf1.to_csv("./ply_final.csv")
+
 
 # %%

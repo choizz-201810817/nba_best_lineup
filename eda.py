@@ -105,7 +105,8 @@ def perImp(df, pos, model):
 
 
 #%%
-# 데이터 출처의 카테고리별로 feature들을 대분류 진행
+## 데이터 출처의 카테고리별로 feature들을 대분류 진행
+# (각 카테고리에 해당하는 컬럼명 가져오기)
 playerPath = f"./data/cate/dd/players/"
 teamPath = f"./data/cate/dd/teams/"
 
@@ -161,10 +162,13 @@ for key in teamKeys:
     print(f"--------------{key}--------------")
     print(teamDict[key])
 
-# %%
-plyDf = pd.read_csv(f"./data/1_player_fin.csv")
-plyDf.columns = plyDf.columns.str.replace(' ','_').to_list()
-plyDf.columns.to_list()
+#%%
+plyDf = pd.read_csv(f"./data/ply_final.csv").drop(['Unnamed: 0', 'team_y'], axis=1)
+plyDf.columns = plyDf.columns.str.replace('\r\n', '_')
+plyDf.columns = plyDf.columns.str.replace(' _', '_')
+plyDf.columns = plyDf.columns.str.replace(' ', '_')
+plyDf.rename(columns={'team_x' : 'team'}, inplace=True)
+plyDf.columns.tolist()
 
 #%%
 teamDf = pd.read_csv(f"data/team_fin.csv").drop(['Unnamed: 0'], axis=1)
@@ -174,17 +178,22 @@ teamDf.columns = teamDf.columns.str.replace(' ','_')\
             .str.replace('__','_').to_list()
 teamDf.columns.to_list()
 
+#%% 
+## 포지션 재 분류
+plyDf.loc[plyDf.position=='G',"position"] = plyDf[plyDf.position=='G'].apply(lambda x: 'PG' if x.height<192 else 'SG', axis=1)
+plyDf.loc[plyDf.position=='F',"position"] = plyDf[plyDf.position=='F'].apply(lambda x: 'SF' if x.height<204 else 'PF', axis=1)
+plyDf.loc[plyDf.position=='GF',"position"] = 'SF'
+
 #%%
 # position에 8개의 결측치 확인
 print(plyDf.isna().sum())
 
 # 결측치가 존재하는 행 출력
-plyDf[plyDf.position.isna()]
+print(plyDf[plyDf.position.isna()])
 
 # posiotion이 결측치로 나온 선수 "Eddy Curry"는 C position으로 뛰었음.
 plyDf = plyDf.fillna("C")
-print(plyDf.isna().sum().sum())
-plyDf[plyDf.player=="Eddy Curry"]["position"]
+print(f"\n결측치 확인 : {plyDf.isna().sum().sum()}\n")
 
 # position별로 몇 명이 존재하는지 확인
 print(plyDf.position.value_counts())
@@ -193,10 +202,10 @@ print(plyDf.position.value_counts())
 plyDf['obbs'] = plyDf[['gp', 'w']].apply(lambda x: x.w/x.gp, axis=1)
 
 #%%
-teamDf.columns.to_list()
+plyDf.to_csv("./data/1_ply_final.csv")
 
 # %%
-# category별 컬럼명들이 전체 데이터안에 모두 존재하는지 확인
+# category별 컬럼들이 전체 데이터의 컬럼안에 모두 존재하는지 확인
 print("<<< player >>>")
 for key in playerDict.keys():
     if (len(playerDict[key])==len(plyDf[playerDict[key]].columns)):
@@ -214,7 +223,7 @@ for key in teamDict.keys():
 #%%
 ##### 카테고리별 eda 진행 #####
 # 카테고리별 데이터 생성
-# plyDf1 = plyDf[plyDf['gp']>=5].reset_index(drop=True) # 5경기 이상 뛴 선수들만 가져옴
+
 plyDf1 = plyDf.reset_index(drop=True)
 
 cateDfs = {}
@@ -324,13 +333,13 @@ for key in posDfs.keys():
 #     model = RandomForestClassifier()
 #     featureImp(df, key, model, target='position')
 
-##### 카테고리별 전처리 끝 #####
+##### 카테고리별 eda 끝 #####
 
 # %%
 ##### margin을 target으로 한 feature importance 추출하기 #####
 ##### 카테고리에서 상관관계 분석을 통해 추출한 feature들로만 진행 #####
 ##### est는 추정치 스탯으로서 예측에 의미가 없고 복잡도만 높인다고 판단 -> 제거함 #####
-nonCorrCols = ['player', 'defrtg', 'netrtg', 'ast/to', 'oreb%', 'dreb%', 'to_ratio', 'ts%', 'pace', 'pie', 'poss',\
+nonCorrCols = ['player', 'team', 'defrtg', 'netrtg', 'ast/to', 'oreb%', 'dreb%', 'to_ratio', 'ts%', 'pace', 'pie', 'poss',\
     'stl%', f'%blk', 'def_ws',\
     'fbps', 'pitp', 'pf',\
     '%pts_2pt_mr', '%pts_fbps', '%pts_ft', '%pts_offto', f'2fgm_%uast', f'3fgm_%uast',\
@@ -341,7 +350,6 @@ nonCorrCols = ['player', 'defrtg', 'netrtg', 'ast/to', 'oreb%', 'dreb%', 'to_rat
 #  'blk', 'pfd', f'%reb', 'fg%', 'weight', 'dreb', 'offrtg', , f'%fga_2pt', '%pts_3pt'
 
 nonCorrDf = plyDf1[nonCorrCols]
-nonCorrDf['season'] = nonCorrDf['season'].apply(lambda x: '20'+x[-2:])
 nonCorrDf
 
 # %%
@@ -352,7 +360,7 @@ nonCorrDf.season = nonCorrDf.season.astype('int')
 nonCorrDf.info()
 
 #%%
-nonCorrDf1 = nonCorrDf.drop(['player', 'position', 'inflation_salary', 'season', '+/-'], axis=1)
+nonCorrDf1 = nonCorrDf.drop(['player', 'team', 'position', 'inflation_salary', 'season', '+/-'], axis=1)
 
 mm_sc = MinMaxScaler()
 mmNonCorrDf = pd.DataFrame(mm_sc.fit_transform(nonCorrDf1), columns=nonCorrDf1.columns)
@@ -402,13 +410,13 @@ for model in models:
     
 ## LightGBM의 예측 결과가 가장 좋게 나옴.
 # <<<<< RandomForestRegressor >>>>>
-# rmse : 0.516
+# rmse : 0.5308
 # <<<<< LinearRegression >>>>>
-# rmse : 1.2901
+# rmse : 1.2774
 # <<<<< XGBRegressor >>>>>
-# rmse : 0.4815
+# rmse : 0.4971
 # <<<<< LGBMRegressor >>>>>
-# rmse : 0.4394
+# rmse : 0.455
 
 # %%
 ## feature importances by positions
