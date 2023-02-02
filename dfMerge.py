@@ -187,11 +187,11 @@ def changedTeam(x=''):
 
 df.team = df.team.apply(lambda x: changedTeam(x))
 df.team.unique()
-
+df
 #%%
 len(df.team.unique())
 
 # %%
-df.to_csv("./ply_final.csv")
+df.to_csv("./data/ply_final.csv")
 
 # %%

@@ -164,11 +164,10 @@ for key in teamKeys:
     print(teamDict[key])
 
 #%%
-plyDf = pd.read_csv(f"./data/ply_final.csv").drop(['Unnamed: 0', 'team_y'], axis=1)
+plyDf = pd.read_csv(f"./data/ply_final.csv").drop(['Unnamed: 0'], axis=1)
 plyDf.columns = plyDf.columns.str.replace('\r\n', '_')
 plyDf.columns = plyDf.columns.str.replace(' _', '_')
 plyDf.columns = plyDf.columns.str.replace(' ', '_')
-plyDf.rename(columns={'team_x' : 'team'}, inplace=True)
 plyDf.columns.tolist()
 
 #%%
@@ -184,7 +183,7 @@ teamDf.columns.to_list()
 plyDf.loc[plyDf.position=='G',"position"] = plyDf[plyDf.position=='G'].apply(lambda x: 'PG' if x.height<192 else 'SG', axis=1)
 plyDf.loc[plyDf.position=='F',"position"] = plyDf[plyDf.position=='F'].apply(lambda x: 'SF' if x.height<204 else 'PF', axis=1)
 plyDf.loc[plyDf.position=='GF',"position"] = 'SF'
-
+plyDf
 #%%
 # position에 8개의 결측치 확인
 print(plyDf.isna().sum())
