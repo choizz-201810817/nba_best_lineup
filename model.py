@@ -40,3 +40,17 @@ salDf
 # %%
 df.isna().sum()
 # %%
+seasons = ohDf.season.unique()
+
+for season in seasons:
+    sameDf = ohDf[ohDf["season"]==season]
+    print(f"<<<<< {season} >>>>>")
+    print(sameDf.player.value_counts().sort_values(ascending=False), "\n")
+# %%
+test = ohDf[ohDf["season"]==2014]
+test[test.player=="Tony Mitchell"]
+# %%
+test = ohDf.drop_duplicates()
+test = test[test["season"]==2008]
+test[test.player=="Marcus Williams"]
+# %%
