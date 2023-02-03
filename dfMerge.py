@@ -1,7 +1,6 @@
 #%%
 import pandas as pd
 import numpy as np
-import openpyxl
 
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -44,6 +43,7 @@ dropCols = mdf2.filter(regex="_y").columns
 mdf2 = mdf2.drop(dropCols, axis=1)
 mdf2.columns = [col[:-2] if "_x" in col else col for col in mdf2.columns]
 mdf2
+
 #%%
 mdf2.to_csv("./data/player_stats.csv")
 
@@ -105,6 +105,7 @@ playerDf = pd.read_csv(f"./data/player_stats.csv").drop(["Unnamed: 0"], axis=1)
 # %%
 salDf.columns = salDf.columns.str.lower()
 salDf.rename(columns={"name":"player"}, inplace=True)
+salDf
 
 #%%
 salDf.season = salDf.season.apply(lambda x: '20'+x[-2:])
@@ -119,17 +120,6 @@ biosDf = pd.read_csv(f"./data/player_bios.csv").drop(["Unnamed: 0"], axis=1)
 biosDf.season = biosDf.season.apply(lambda x: '20'+x[-2:])
 biosDf.season
 
-# %%
-# seasons1 = ["'99-00", "'00-01", "'01-02", "'02-03", "'03-04", "'04-05", "'05-06"
-# , "'06-07", "'07-08", "'08-09", "'09-10", "'10-11", "'11-12", "'12-13", "'13-14"
-# , "'14-15", "'15-16", "'16-17", "'17-18", "'18-19", "'19-20", "'20-21", "'21-22"
-# , "'22-23"]
-
-# seasons2 = ["99-00", "00-01", "01-02", "02-03", "03-04", "04-05", "05-06"
-# , "06-07", "07-08", "08-09", "09-10", "10-11", "11-12", "12-13", "13-14"
-# , "14-15", "15-16", "16-17", "17-18", "18-19", "19-20", "20-21", "21-22"
-# , "22-23"]
-
 #%%
 biosDf = biosDf[['player', 'team', 'age', 'height', 'weight', 'season']]
 biosDf
@@ -137,6 +127,7 @@ biosDf
 #%%
 mdf = pd.merge(playerDf, biosDf, on=["player", "team", "age", "season"])
 mdf
+
 
 #%%
 # dfs1 = []
@@ -152,18 +143,13 @@ mdf1.drop(["#", "salary", "rank"], axis=1, inplace=True)
 mdf1 = mdf1.reset_index(drop=True)
 mdf1
 
-#%%
-# df.to_csv('./data/player_fin.csv')
-
 # %%
 mdf1.team_y = mdf1.team_y.apply(lambda x: 'Los Angeles Clippers' if x=='LA Clippers' else x)
-
-#%%
-print(mdf1.team_y.unique())
+print(mdf1.team_y.unique(), '\n')
 print(mdf1.team_x.unique())
 
 #%%
-## 이니셜로 되어있는 팀명을 풀네임으로 변경
+## salDf와 merge하기 전 df인 mdf의 팀명을 풀네임으로 변경
 def teamReplace(x='', team_x=[], team_y=[]):
     idx = team_x.index(x)
     return team_y[idx]
@@ -173,8 +159,15 @@ team_x = mdf1.team_x.unique().tolist()
 team_y = mdf1.team_y.unique().tolist()
 
 #%%
-mdf1.team_x = mdf1.team_x.apply(lambda x: teamReplace(x, team_x=team_x, team_y=team_y))
-mdf1.team_x.unique()
+mdf.team = mdf.team.apply(lambda x: teamReplace(x, team_x=team_x, team_y=team_y))
+mdf.team.unique()
+
+#%%
+### 팀명이 풀네임으로 변경된 mdf와 salDf를 다시 merge
+df = pd.merge(mdf, salDf, on=["player", "team", "season"], how="inner")
+df.drop(["#", "salary", "rank"], axis=1, inplace=True)
+df.reset_index(drop=True)
+df
 
 #%%
 ## 팀명이 바뀐 팀의 이름을 현재 팀명으로 통일
@@ -192,14 +185,13 @@ def changedTeam(x=''):
     else:
         return x
 
-mdf1.team_x = mdf1.team_x.apply(lambda x: changedTeam(x))
-mdf1.team_x.unique()
-
+df.team = df.team.apply(lambda x: changedTeam(x))
+df.team.unique()
+df
 #%%
-len(mdf1.team_x.unique())
+len(df.team.unique())
 
 # %%
-mdf1.to_csv("./ply_final.csv")
-
+df.to_csv("./data/ply_final.csv")
 
 # %%
