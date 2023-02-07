@@ -162,19 +162,16 @@ for key in teamKeys:
     print(f"--------------{key}--------------")
     print(teamDict[key])
 
-<<<<<<< HEAD
 # %%
 plyDf = pd.read_csv(f"./data/1_player_fin.csv")
 plyDf.columns = plyDf.columns.str.replace(' ','_').to_list()
 plyDf.columns.to_list()
-=======
 #%%
 plyDf = pd.read_csv(f"./data/ply_final.csv").drop(['Unnamed: 0'], axis=1)
 plyDf.columns = plyDf.columns.str.replace('\r\n', '_')
 plyDf.columns = plyDf.columns.str.replace(' _', '_')
 plyDf.columns = plyDf.columns.str.replace(' ', '_')
 plyDf.columns.tolist()
->>>>>>> f071735196e8f827404b02cc930e81987f681dab
 
 #%%
 teamDf = pd.read_csv(f"data/team_fin.csv").drop(['Unnamed: 0'], axis=1)
@@ -184,15 +181,12 @@ teamDf.columns = teamDf.columns.str.replace(' ','_')\
             .str.replace('__','_').to_list()
 teamDf.columns.to_list()
 
-<<<<<<< HEAD
-=======
 #%% 
 ## 포지션 재 분류
 plyDf.loc[plyDf.position=='G',"position"] = plyDf[plyDf.position=='G'].apply(lambda x: 'PG' if x.height<192 else 'SG', axis=1)
 plyDf.loc[plyDf.position=='F',"position"] = plyDf[plyDf.position=='F'].apply(lambda x: 'SF' if x.height<204 else 'PF', axis=1)
 plyDf.loc[plyDf.position=='GF',"position"] = 'SF'
 plyDf
->>>>>>> f071735196e8f827404b02cc930e81987f681dab
 #%%
 # position에 8개의 결측치 확인
 print(plyDf.isna().sum())
@@ -478,21 +472,9 @@ shap.force_plot(explainer.expected_value, shap_values, X_val)
 # %%
 shap.summary_plot(shap_values, X_val, plot_type = "bar")
 
-<<<<<<< HEAD
 # %%
 df = pd.read_csv("./data/1_ply_final.csv")
 
 # %%
 df[df['team']=="Atlanta Hawks"]
 # %%
-=======
-
-
-# %%
-positions = nonCorrDf.position.unique()
-
-for pos in positions:
-    df = nonCorrDf[nonCorrDf['position'=='C']]
-    df['new'] = -(2.37*df.age) + (2.05*df.netrtg) + (1.80*df.pitp) + (1.27*df.def_ws) + (1.17*df.poss) - (0.81*df['%pf']) - (0.57*df.defrtg) + (0.55*df['%pts']) - (0.47*df.pf) + (0.37*df['dreb%']) + (0.30*df['%pts_fbps']) + (0.06*df.obbs) + (0.04*df.pie) + (0.03*df['oreb%'])
-
->>>>>>> f071735196e8f827404b02cc930e81987f681dab

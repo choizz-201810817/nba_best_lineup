@@ -128,12 +128,10 @@ biosDf
 mdf = pd.merge(playerDf, biosDf, on=["player", "team", "age", "season"])
 mdf
 
-
 #%%
-# dfs1 = []
-# for season1, season2 in zip(seasons1, seasons2):
-#     mdf = pd.merge(mdf1[mdf1["season"]==season1], salDf[salDf["season"]==season2], on="player", how="inner")
-#     dfs1.append(mdf)
+## player data와 salary data의 팀명 표기가 다른 문제 발생.
+## player data와 salary data를 merge하여 이니셜 팀명과 풀네임 팀명을 매칭한 이후
+## 이니셜로 되어있는 player data의 팀명을 풀네임 팀명으로 변경
 
 mdf1 = pd.merge(mdf, salDf, on=["player", "season"], how="inner")
 mdf1
@@ -159,12 +157,13 @@ team_x = mdf1.team_x.unique().tolist()
 team_y = mdf1.team_y.unique().tolist()
 
 #%%
+
 mdf.team = mdf.team.apply(lambda x: teamReplace(x, team_x=team_x, team_y=team_y))
 mdf.team.unique()
 
 #%%
 ### 팀명이 풀네임으로 변경된 mdf와 salDf를 다시 merge
-df = pd.merge(mdf, salDf, on=["player", "team", "season"], how="inner")
+df = pd.merge(mdf, salDf, on=["player", "team", "season"], how="left")
 df.drop(["#", "salary", "rank"], axis=1, inplace=True)
 df.reset_index(drop=True)
 df
@@ -190,6 +189,10 @@ df.team.unique()
 df
 #%%
 len(df.team.unique())
+
+#%%
+print(df.position.isna().sum())
+print(df.position.notna().sum())
 
 # %%
 df.to_csv("./data/ply_final.csv")
