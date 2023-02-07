@@ -154,7 +154,7 @@ acc = accuracy_score(y_val, pred)
 print(f"포지션 예측 모델 validation accuracy : {acc}")
 
 # %%
-explainer = shap.TreeExplainer(model)
+explainer = shap.TreeExplainer(model3)
 shap_values = explainer.shap_values(X_train1)
 
 shap.summary_plot(shap_values, X_train1, max_display=40)
