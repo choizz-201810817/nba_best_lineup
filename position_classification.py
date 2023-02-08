@@ -129,7 +129,7 @@ train_set.position
 Xset = train_set.drop(['position'], axis=1)
 yset = train_set.position
 
-X_train, X_val, y_train, y_val = train_test_split(Xset, yset, test_size=.2, random_state=32)
+X_train, X_val, y_train, y_val = train_test_split(Xset, yset, test_size=.2, random_state=64)
 print(f"X_train shape : {X_train.shape}")
 print(f"X_val shape : {X_val.shape}")
 print(f"y_train shape : {y_train.shape}")
@@ -173,9 +173,12 @@ shap_values = explainer.shap_values(X_train1)
 
 shap.summary_plot(shap_values, X_train1, max_display=40)
 
+
 #%%
 # SHAP을 통해 도출한 Feature importance가 높은 변수들만 가지고 다시 학습 진행..
-mmDf2 = mmDf1[["player","team","season","height","oreb%",f"%ast","dreb%","%pts_fbps","%3pm",f"%blk","ast/to",f"2fgm_%uast","%pf","%pts_2pt_mr","position"]]
+mmDf2 = mmDf1[["player", "team", "season", "height", "oreb%", f"%ast", "dreb%", "%pts_fbps",
+               "%3pm", f"%blk", "ast/to", f"2fgm_%uast", "%pf", "%pts_2pt_mr",
+               "%tov", "stl%", "pitp", "age", "%pfd", "to_ratio", "position"]]
 
 
 # 데이터 분리
@@ -206,22 +209,26 @@ X_train1 = X_train.drop(["player", "team", "season"], axis=1)
 X_val1 = X_val.drop(["player", "team", "season"], axis=1)
 
 
-# 학습 진행
+# 하이퍼 파라미터 튜닝
 params = {"max_depth" : [5, 10, 30, 50],
-          "lambda" : [0.01, 0.1, 1],
           "n_estimators" : [100, 300, 500, 700, 1000]}
 
 model = XGBClassifier()
 
 gscv = GridSearchCV(estimator=model, param_grid=params, scoring='accuracy', cv=3, verbose=2)
-gscv.fit(Xset, yset)
+gscv.fit(X_train1, y_train)
+
+# 튜닝 결과 확인
+print(gscv.best_estimator_)
+print(gscv.best_score_)
 
 
-model.fit(X_train1, y_train)
-pred = model.predict(X_val1)
+#%%
+xgClf = XGBClassifier(n_estimators=100, max_depth=30)
+xgClf.fit(X_train1, y_train)
+pred = xgClf.predict(X_val1)
 acc = accuracy_score(y_val, pred)
-print(f"포지션 예측 모델 validation accuracy : {acc}")
-
+print(f"정확도 : {acc}")
 
 #%%
 ##### -> Feature selection 진행 (RFE 기법)
