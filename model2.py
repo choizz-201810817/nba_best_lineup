@@ -99,8 +99,8 @@ import shap
 
 
 #%%
-df = pd.read_csv("./data/preprocessingDf_edit.csv").drop(["Unnamed: 0"], axis=1)
-df.info()
+df = pd.read_csv(f"./data/obbs_data1.csv").drop(["index"], axis=1)
+df
 
 #%%
 df1 = df.drop(["player", "team", "season", "position"], axis=1)
@@ -115,6 +115,8 @@ train_set = mmDf1[mmDf1.position.notna()]
 test_set = mmDf1[mmDf1.position.isna()]
 
 #%%
+## position labeling 진행
+
 encoder = LabelEncoder()
 train_set.position = encoder.fit_transform(train_set.position)
 train_set.position
@@ -154,6 +156,8 @@ acc = accuracy_score(y_val, pred)
 print(f"포지션 예측 모델 validation accuracy : {acc}")
 
 # %%
+##### validation accuracy가 가장 높은 xgboost를 사용
+##### feature importance 추출
 explainer = shap.TreeExplainer(model3)
 shap_values = explainer.shap_values(X_train1)
 
