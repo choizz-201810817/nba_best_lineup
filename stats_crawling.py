@@ -41,13 +41,14 @@ def body(driver):
     return stats
 
 # %%
-# generals = ["scoring", "usage", "defense", "estimated-advanced"]
-generals = ["traditional", "advanced", "scoring"]
+generals = ["traditional", "advanced", "misc", "scoring", "usage", "defense", "estimated-advanced"]
 
-seasons = ["1999-00", "2000-01", "2001-02", "2002-03", "2003-04", "2004-05", "2005-06"
-, "2006-07", "2007-08", "2008-09", "2009-10", "2010-11", "2011-12", "2012-13", "2013-14"
-, "2014-15", "2015-16", "2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"
-, "2022-23"]
+# seasons = ["1999-00", "2000-01", "2001-02", "2002-03", "2003-04", "2004-05", "2005-06"
+# , "2006-07", "2007-08", "2008-09", "2009-10", "2010-11", "2011-12", "2012-13", "2013-14"
+# , "2014-15", "2015-16", "2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"
+# , "2022-23"]
+
+seasons = ["2022-23"]
 
 playerDfs = []
 
@@ -71,7 +72,8 @@ for general in generals:
             columns.append(col.text)
         while ('' in columns):
             columns.remove('') # ''로 나오는 컬럼명 없애기
-        columns = columns[1:]
+        if ' ' in columns:
+            columns = columns[1:]
         columns.insert(0,'#')
 
         # 테이블 바디 가져오기
@@ -82,12 +84,98 @@ for general in generals:
         df.columns = df.columns.str.lower()
         playerDfs.append(df)
 
+
+
+# %%
+for i, general in enumerate(generals):
+    df = pd.concat(playerDfs[i*24:(i+1)*24])
+    df.to_csv(f'./data/{general}/player_{general}.csv')
+
+
+#%%
+# playerDfs1 = playerDfs[:24]
+# # %%
+# for df,season in zip(playerDfs1, seasons):
+#     df.to_csv(f"./data/misc/player_stats/player_{season}.csv")
+# # %%
+# df = pd.concat(playerDfs1).reset_index(drop=True)
+# df.to_csv('./data/player_misc.csv')
+
+# %%
+for i, df in enumerate(playerDfs):
+    if i==0:
+        mdf2 = df
+    elif i==6:
+        continue
+    else:
+        mdf2 = pd.merge(mdf2, df, on=["player", "team", "age", "season"])
+        
+        # 중복된 컬럼에서 _y로 병합된 컬럼은 제거
+        dropCols = mdf2.filter(regex="_y").columns
+        mdf2 = mdf2.drop(dropCols, axis=1)
+
+        # _x로 병합된 컬럼명은 _x를 제외한 나머지 부분 가져오기
+        mdf2.columns = [col[:-2] if "_x" in col else col for col in mdf2.columns]
+
+#%%
+mdf2 = pd.merge(mdf2, playerDfs[6], on=['player', 'season', 'gp'], how='inner')
+dropCols = mdf2.filter(regex="_y").columns
+mdf2 = mdf2.drop(dropCols, axis=1)
+mdf2.columns = [col[:-2] if "_x" in col else col for col in mdf2.columns]
+mdf2
+
+# %%
+mdf2.to_csv(f'./data/player_stats_2023.csv')
+
+#%%
+df2023 = pd.read_csv(f'./data/player_stats_2023.csv').drop(["Unnamed: 0"], axis=1)
+df2023.columns.tolist()
+
+# %%
+oriDf = pd.read_csv("./data/player_stats.csv").drop(["Unnamed: 0"], axis=1)
+oriDf.columns = oriDf.columns.str.replace('\r','')
+oriCols = oriDf.columns.tolist()
+
+#%%
+# 컬럼 순서 맞추기
+df2023 = df2023[oriCols]
+
+# %%
+oriDf1 = oriDf.drop(oriDf[oriDf.season=="'22-23"].index, axis=0)
+resultDf = pd.concat([oriDf1, df2023]).reset_index(drop=True)
+resultDf
+# %%
+resultDf.to_csv("./data/player_stats.csv")
+
+#%%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #%%
 # bios 크롤링
-seasons = ["1999-00", "2000-01", "2001-02", "2002-03", "2003-04", "2004-05", "2005-06"
-, "2006-07", "2007-08", "2008-09", "2009-10", "2010-11", "2011-12", "2012-13", "2013-14"
-, "2014-15", "2015-16", "2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"
-, "2022-23"]
+# seasons = ["1999-00", "2000-01", "2001-02", "2002-03", "2003-04", "2004-05", "2005-06"
+# , "2006-07", "2007-08", "2008-09", "2009-10", "2010-11", "2011-12", "2012-13", "2013-14"
+# , "2014-15", "2015-16", "2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"
+# , "2022-23"]
+
+seasons = ["2022-23"]
 
 biosDfs = []
 
@@ -121,21 +209,7 @@ for season in seasons:
     biosDfs.append(df)
 
 # %%
-for i, general in enumerate(generals):
-    df = pd.concat(playerDfs[i*24:(i+1)*24])
-    df.to_csv(f'./data/{general}/player_{general}.csv')
-
-# %%
 df = pd.concat(biosDfs).reset_index(drop=True)
-
-#%%
-# playerDfs1 = playerDfs[:24]
-# # %%
-# for df,season in zip(playerDfs1, seasons):
-#     df.to_csv(f"./data/misc/player_stats/player_{season}.csv")
-# # %%
-# df = pd.concat(playerDfs1).reset_index(drop=True)
-# df.to_csv('./data/player_misc.csv')
 
 # %%
 def ft2cm(height=""):
@@ -151,5 +225,22 @@ df.height = df.height.apply(lambda x: ft2cm(x))
 df.weight = df.weight.astype("float64")
 
 # %%
-df.to_csv(f'./data/player_bios.csv')
+df.to_csv(f'./data/player_bios_2023.csv')
+
+#%%
+bios2023 = pd.read_csv(f'./data/player_bios_2023.csv').drop(["Unnamed: 0"], axis=1)
+
 # %%
+bios = pd.read_csv("./data/player_bios.csv").drop(["Unnamed: 0"], axis=1)
+biosCols = bios.columns.tolist()
+
+#%%
+bios2023 = bios2023[biosCols]
+
+#%%
+bios1 = bios.drop(bios[bios.season=="'22-23"].index, axis=0)
+biosDf = pd.concat([bios1, bios2023]).reset_index(drop=True)
+biosDf
+
+# %%
+biosDf.to_csv("./data/player_bios.csv")

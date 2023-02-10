@@ -2,6 +2,9 @@
 import pandas as pd
 import numpy as np
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
@@ -14,6 +17,8 @@ from tensorflow.python.keras import Model, Sequential, regularizers
 from tensorflow.python.keras.optimizer_v2.nadam import Nadam
 from keras.losses import SparseCategoricalCrossentropy
 from keras.initializers.initializers_v1 import HeNormal
+from keras.callbacks import ModelCheckpoint
+from keras.models import load_model
 
 
 import shap
@@ -26,20 +31,28 @@ print(device_lib.list_local_devices())
 import tensorflow as tf
 tf.test.is_gpu_available()
 
-# %%
-df = pd.read_csv("./data/obbs_data1.csv").drop(["index"], axis=1)
+#%%
+import os
 
-df1 = df.drop(["player","team","season","position"], axis=1)
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
+
+# %%
+df = pd.read_csv("./nonCorr1.csv").drop(["Unnamed: 0"], axis=1)
+df
+
+#%%
+df1 = df.drop(["player", "team", "season", "position", "inflation_salary"], axis=1)
 
 mmSc = MinMaxScaler()
-df1 = pd.DataFrame(mmSc.fit_transform(df1), columns=df1.columns)
-mmDf = pd.concat([df[["player","team","season"]], df1, df["position"]], axis=1)
+df2 = pd.DataFrame(mmSc.fit_transform(df1), columns=df1.columns)
+mmDf = pd.concat([df[["player", "team", "season"]], df2, df["position"]], axis=1)
 
 train_set = mmDf[mmDf.position.notna()]
 test_set = mmDf[mmDf.position.isna()]
 
 lbEnc = LabelEncoder()
 train_set["pos_label"] = lbEnc.fit_transform(train_set.position)
+
 
 # %%
 # feature selection
@@ -60,8 +73,8 @@ shap_values = explainer.shap_values(X)
 shap.summary_plot(shap_values, X, max_display=40)
 
 #%%
-selected_cols = ["height", f"%ast", "oreb%", "dreb%", "%pts_fbps", "%3pm", f"%blk", "ast/to", f"2fgm_%uast",
-                 "%pf", "%pts_2pt_mr", "%tov", "stl%", "pitp", "age", "%pfd"]
+selected_cols = ["height", "oreb%", f"%ast", "dreb%", "%pts_fbps", f"%blk", "%3pm", f"2fgm_%uast", "%pf", 
+                 "ast/to", "%pts_2pt_mr", "stl%", "%pfd", "age", "pitp", f"3fgm_%uast"]
 # selected_cols = ["height", f"%ast", "oreb%", "dreb%", "%pts_fbps", "%3pm", f"%blk", "ast/to", f"2fgm_%uast",
 #                  "%pf", "%pts_2pt_mr", "%tov", "stl%", "pitp", "age", "%pfd", "%pts_ft", "ft%", "pf", f"3fgm_%uast",
 #                  "poss", "%pts", "to_ratio", "fbps"]
@@ -79,46 +92,65 @@ print("y_val's shape :", y_val.shape)
 # %%
 # 포지션 분류 모델 설계
 
-def posClassifierModel(X_train, y_train, X_val, y_val, HIDDEN_UNITS, INPUT_DIM, EPOCHS, opti, lossFunc, NORM, NUM_CLASSES, BATCH_SIZE, INITIALIZER):
+def posClassifierModel(X_train, y_train, X_val, y_val, HIDDEN_UNITS, INPUT_DIM, EPOCHS, opti, lossFunc, NORM, NUM_CLASSES, BATCH_SIZE, INITIALIZER, checkpoint):
     model = Sequential()
     model.add(Dense(HIDDEN_UNITS, input_dim=INPUT_DIM, activation='relu', kernel_initializer=INITIALIZER))
     model.add(Dropout(0.1))
-    model.add(Dense(HIDDEN_UNITS, activation='relu'))
+    model.add(Dense(256, activation='relu', kernel_regularizer=NORM))
     model.add(Dropout(0.1))
     model.add(Dense(NUM_CLASSES, activation='softmax'))
 
     model.summary()
     model.compile(optimizer=opti, loss=lossFunc, metrics=['accuracy'])
-    model.fit(X_train, y_train,
-            validation_data=(X_val, y_val), 
-            epochs=EPOCHS, 
-            verbose=1,
-            batch_size=BATCH_SIZE)
+    history = model.fit(X_train, y_train,
+                        validation_data=(X_val, y_val), 
+                        epochs=EPOCHS, 
+                        verbose=1,
+                        batch_size=BATCH_SIZE,
+                        callbacks=[checkpoint])
     
-    return model
+    return model, history
 
 # %%
 HIDDEN_UNITS = 128
-EPOCHS = 500
+EPOCHS = 1000
 BATCH_SIZE = 32
-opti = Nadam(learning_rate=0.005)
+opti = Nadam(learning_rate=0.0005)
 lossFunc = SparseCategoricalCrossentropy()
-NORM = regularizers.l2(0.01)
+NORM = regularizers.l2(0.1)
 NUM_CLASSES = 5
 INPUT_DIM = 16
 INITIALIZER = HeNormal()
 
-model = posClassifierModel(X_train, y_train, X_val, y_val, HIDDEN_UNITS, INPUT_DIM, EPOCHS, opti, lossFunc, NORM, NUM_CLASSES, BATCH_SIZE, INITIALIZER)
+save_path = './model_save/'+'{epoch:03d}-{val_accuracy:.4f}.hdf5'
+checkpoint = ModelCheckpoint(filepath=save_path, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
+
+model, history = posClassifierModel(X_train, y_train, X_val, y_val, HIDDEN_UNITS, INPUT_DIM, 
+                                    EPOCHS, opti, lossFunc, NORM, NUM_CLASSES, BATCH_SIZE, 
+                                    INITIALIZER, checkpoint)
+
+
+#%%
+# 모델 평가
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
 
 # %%
-# 모델 평가
-model.evaluate(X_val, y_val, verbose=1)
+hdf5_path = './model_save/temp/521-0.8012.hdf5'
+loaded_model = load_model(hdf5_path)
+
+loaded_model.evaluate(X_val, y_val, verbose=1)
 
 # %%
 # 포지션 예측값 채우기
 X_test = test_set[selected_cols]
 
-preds = model.predict(X_test)
+preds = loaded_model.predict(X_test)
 
 predictions = []
 for pred in preds:
@@ -136,8 +168,12 @@ resultDf = resultDf.sort_index()
 resultDf
 
 # %%
-resultDf.to_csv("./data/filledPosition.csv")
+df.position = resultDf.position
+df
 
 # %%
-test_set
+df.to_csv("./data/nonCorrAllPos.csv")
+
+# %%
+df.position.isna().sum()
 # %%

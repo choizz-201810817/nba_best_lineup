@@ -162,13 +162,9 @@ for key in teamKeys:
     print(f"--------------{key}--------------")
     print(teamDict[key])
 
-# %%
-plyDf = pd.read_csv(f"./data/1_player_fin.csv")
-plyDf.columns = plyDf.columns.str.replace(' ','_').to_list()
-plyDf.columns.to_list()
 #%%
 plyDf = pd.read_csv(f"./data/ply_final.csv").drop(['Unnamed: 0'], axis=1)
-plyDf.columns = plyDf.columns.str.replace('\r\n', '_')
+plyDf.columns = plyDf.columns.str.replace('\n', '_')
 plyDf.columns = plyDf.columns.str.replace(' _', '_')
 plyDf.columns = plyDf.columns.str.replace(' ', '_')
 plyDf.columns.tolist()
@@ -187,26 +183,17 @@ plyDf.loc[plyDf.position=='G',"position"] = plyDf[plyDf.position=='G'].apply(lam
 plyDf.loc[plyDf.position=='F',"position"] = plyDf[plyDf.position=='F'].apply(lambda x: 'SF' if x.height<204 else 'PF', axis=1)
 plyDf.loc[plyDf.position=='GF',"position"] = 'SF'
 plyDf
+
 #%%
-# position에 8개의 결측치 확인
-print(plyDf.isna().sum())
-
-# 결측치가 존재하는 행 출력
-plyDf[plyDf.position.isna()]
-
 # posiotion이 결측치로 나온 선수 "Eddy Curry"는 C position으로 뛰었음.
-plyDf = plyDf.fillna("C")
-print(plyDf.isna().sum().sum())
-plyDf[plyDf.player=="Eddy Curry"]["position"]
+plyDf.loc[plyDf.player=="Eddy Curry", "position"] = "C"
 
 # position별로 몇 명이 존재하는지 확인
 print(plyDf.position.value_counts())
 
 # 승률 컬럼 추가
 plyDf['obbs'] = plyDf[['gp', 'w']].apply(lambda x: x.w/x.gp, axis=1)
-
-#%%
-teamDf.columns.to_list()
+plyDf
 
 # %%
 # category별 컬럼명들이 전체 데이터안에 모두 존재하는지 확인
@@ -334,7 +321,7 @@ for key in posDfs.keys():
 ##### margin을 target으로 한 feature importance 추출하기 #####
 ##### 카테고리에서 상관관계 분석을 통해 추출한 feature들로만 진행 #####
 ##### est는 추정치 스탯으로서 예측에 의미가 없고 복잡도만 높인다고 판단 -> 제거함 #####
-nonCorrCols = ['player', 'defrtg', 'netrtg', 'ast/to', 'oreb%', 'dreb%', 'to_ratio', 'ts%', 'pace', 'pie', 'poss',\
+nonCorrCols = ['player', 'team', 'defrtg', 'netrtg', 'ast/to', 'oreb%', 'dreb%', 'to_ratio', 'ts%', 'pace', 'pie', 'poss',\
     'stl%', f'%blk', 'def_ws',\
     'fbps', 'pitp', 'pf',\
     '%pts_2pt_mr', '%pts_fbps', '%pts_ft', '%pts_offto', f'2fgm_%uast', f'3fgm_%uast',\
@@ -345,18 +332,21 @@ nonCorrCols = ['player', 'defrtg', 'netrtg', 'ast/to', 'oreb%', 'dreb%', 'to_rat
 #  'blk', 'pfd', f'%reb', 'fg%', 'weight', 'dreb', 'offrtg', , f'%fga_2pt', '%pts_3pt'
 
 nonCorrDf = plyDf1[nonCorrCols]
-nonCorrDf['season'] = nonCorrDf['season'].apply(lambda x: '20'+x[-2:])
+# nonCorrDf['season'] = nonCorrDf['season'].apply(lambda x: '20'+x[-2:])
 nonCorrDf
 
+#%%
+nonCorrDf.isna().sum()
+
 # %%
-nonCorrDf.to_csv("./nonCorr.csv")
+nonCorrDf.to_csv("./nonCorr1.csv")
 
 # %%
 # nonCorrDf.season = nonCorrDf.season.astype('int')
 nonCorrDf.info()
 
 #%%
-nonCorrDf1 = nonCorrDf.drop(['player', 'position', 'inflation_salary', 'season', '+/-'], axis=1)
+nonCorrDf1 = nonCorrDf.drop(['player', 'team', 'position', 'inflation_salary', 'season', '+/-'], axis=1)
 
 mm_sc = MinMaxScaler()
 mmNonCorrDf = pd.DataFrame(mm_sc.fit_transform(nonCorrDf1), columns=nonCorrDf1.columns)

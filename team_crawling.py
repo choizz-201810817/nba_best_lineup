@@ -34,13 +34,15 @@ def body(driver):
     return stats
 
 # %%
-generals = ["four-factors", "misc", "defense", "estimated-advanced"]
+generals = ["four-factors", "misc", "defense", "estimated-advanced", "traditional", "advanced", "scoring"]
 # generals = ["traditional", "advanced", "scoring"]
 
-seasons = ["1999-00", "2000-01", "2001-02", "2002-03", "2003-04", "2004-05", "2005-06"
-, "2006-07", "2007-08", "2008-09", "2009-10", "2010-11", "2011-12", "2012-13", "2013-14"
-, "2014-15", "2015-16", "2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"
-, "2022-23"]
+# seasons = ["1999-00", "2000-01", "2001-02", "2002-03", "2003-04", "2004-05", "2005-06"
+# , "2006-07", "2007-08", "2008-09", "2009-10", "2010-11", "2011-12", "2012-13", "2013-14"
+# , "2014-15", "2015-16", "2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22"
+# , "2022-23"]
+
+seasons = ["2022-23"]
 
 teamDfs = []
 
@@ -64,7 +66,8 @@ for general in generals:
             columns.append(col.text)
         while ('' in columns):
             columns.remove('') # ''로 나오는 컬럼명 없애기
-        # columns = columns[1:]
+        if ' ' in columns:
+            columns = columns[1:]
         columns.insert(0,'#')
 
         # 테이블 바디 가져오기
@@ -76,9 +79,9 @@ for general in generals:
         teamDfs.append(df)
 
 # %%
-for i, general in enumerate(generals):
-    df = pd.concat(teamDfs[i*24:(i+1)*24])
-    df.to_csv(f'./data/{general}/team_{general}.csv')
+# for i, general in enumerate(generals):
+#     df = pd.concat(teamDfs[i*24:(i+1)*24])
+#     df.to_csv(f'./data/{general}/team_{general}.csv')
 
 # teamDfs1 = teamDfs[:24]
 # # %%
@@ -87,5 +90,42 @@ for i, general in enumerate(generals):
 # # %%
 # df = pd.concat(teamDfs1).reset_index(drop=True)
 # df.to_csv('./data/team_misc.csv')
+
+# %%
+teamMergeDfs = []
+
+for i, df in enumerate(teamDfs):
+    if i==0:
+        mdf = df
+    else:
+        mdf = pd.merge(mdf, df, on=["team"])
+        
+        # 중복된 컬럼에서 _y로 병합된 컬럼은 제거
+        dropCols = mdf.filter(regex="_y").columns
+        mdf = mdf.drop(dropCols, axis=1)
+
+        # _x로 병합된 컬럼명은 _x를 제외한 나머지 부분 가져오기
+        mdf.columns = [col[:-2] if "_x" in col else col for col in mdf.columns]
+
+mdf
+
+# %%
+team_df = pd.read_csv(r"./data/team_stats.csv").drop(["Unnamed: 0"], axis=1)
+teamCols = team_df.columns.tolist()
+teamCols
+
+# %%
+mdf = mdf[teamCols]
+mdf
+
+# %%
+team_df1 = team_df.drop(team_df[team_df.season=="'22-23"].index)
+
+# %%
+teamResult = pd.concat([team_df1, mdf]).reset_index(drop=True)
+teamResult
+
+# %%
+teamResult.to_csv(r"./data/team_stats.csv")
 
 # %%

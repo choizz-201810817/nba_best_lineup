@@ -6,21 +6,22 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 import os
+
 # %%
-plyPath = "./data/players/"
-teamPath = "./data/teams/"
+plyPath = "./data/cate/dd/players/"
+# teamPath = "./data/teams/"
 
 plyDfs = []
-teamDfs = []
+# teamDfs = []
 for (root, dir, files) in os.walk(plyPath):
     for file in files:
         df = pd.read_csv(plyPath+file).drop(["Unnamed: 0"], axis=1)
         plyDfs.append(df)
 
-for (root, dir, files) in os.walk(teamPath):
-    for file in files:
-        df = pd.read_csv(teamPath+file).drop(["Unnamed: 0"], axis=1)
-        teamDfs.append(df)
+# for (root, dir, files) in os.walk(teamPath):
+#     for file in files:
+#         df = pd.read_csv(teamPath+file).drop(["Unnamed: 0"], axis=1)
+#         teamDfs.append(df)
 
 #%%
 for i, df in enumerate(plyDfs):
@@ -101,6 +102,7 @@ teamFinalDf.to_csv("./data/team_stats.csv")
 # %%
 salDf = pd.read_excel(f"./data/player_salary_combine.xlsx")
 playerDf = pd.read_csv(f"./data/player_stats.csv").drop(["Unnamed: 0"], axis=1)
+playerDf
 
 # %%
 salDf.columns = salDf.columns.str.lower()
@@ -157,7 +159,6 @@ team_x = mdf1.team_x.unique().tolist()
 team_y = mdf1.team_y.unique().tolist()
 
 #%%
-
 mdf.team = mdf.team.apply(lambda x: teamReplace(x, team_x=team_x, team_y=team_y))
 mdf.team.unique()
 
@@ -187,6 +188,7 @@ def changedTeam(x=''):
 df.team = df.team.apply(lambda x: changedTeam(x))
 df.team.unique()
 df
+
 #%%
 len(df.team.unique())
 
@@ -197,4 +199,8 @@ print(df.position.notna().sum())
 # %%
 df.to_csv("./data/ply_final.csv")
 
+# %%
+df.isna().sum()
+# %%
+df
 # %%
