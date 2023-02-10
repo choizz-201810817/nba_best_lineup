@@ -57,7 +57,7 @@ groupDf
 plyDf.groupby(by=["season","team"]).count()
 # %%
 dd = pd.read_csv("data\player_stats.csv")
-dd.groupby(by=["season","team"]).count()
+
 # %%
 for season in dd.season.unique():
     print(len(dd[dd.season==season]))
