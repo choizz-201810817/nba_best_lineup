@@ -21,7 +21,6 @@ from keras.callbacks import ModelCheckpoint
 from keras.models import load_model
 from keras import backend as K
 
-
 # %%
 teamDf = pd.read_csv("./data/team_stats.csv")
 teamDf['obbs'] = teamDf.w / teamDf.gp
@@ -135,17 +134,17 @@ def rmse(y_true, y_pred):
         return K.sqrt(K.mean(K.square(y_pred - y_true))) 
     
 # %%
-def cnnModel(X_train, X_val, y_train, y_val, HIDDEN_UNITS, KERNEL_SIZE, INITIALIZER, NORM, opti, lossFunc, EPOCHS, BATCH_SIZE, checkpoint):
+def cnnModel(X_train, X_val, y_train, y_val, HIDDEN_UNITS, KERNEL_SIZE, INITIALIZER, NORM, opti, EPOCHS, BATCH_SIZE, checkpoint):
     model = Sequential()
-    model.add(Conv1D(HIDDEN_UNITS, kernel_size=KERNEL_SIZE, input_shape=X_train.shape[1:], activation='relu', kernel_initializer=INITIALIZER))
-    model.add(MaxPooling1D(pool_size=(KERNEL_SIZE)))
+    model.add(Conv1D(HIDDEN_UNITS, kernel_size=KERNEL_SIZE, input_shape=X_train.shape[1:], activation='elu', kernel_initializer=INITIALIZER))
+    model.add(MaxPooling1D(pool_size=(3)))
     model.add(Dropout(0.1))
-    model.add(Dense(HIDDEN_UNITS, activation='elu', kernel_regularizer=NORM))
+    model.add(Dense(128, activation='elu', kernel_regularizer=NORM))
     model.add(Dropout(0.1))
     model.add(Dense(1))
 
     model.summary()
-    model.compile(optimizer=opti, loss=lossFunc, metrics=[RootMeanSquaredError()])
+    model.compile(optimizer=opti, loss=rmse, metrics=[RootMeanSquaredError()])
     history = model.fit(X_train, y_train,
                         validation_data=(X_val, y_val), 
                         epochs=EPOCHS, 
@@ -156,11 +155,10 @@ def cnnModel(X_train, X_val, y_train, y_val, HIDDEN_UNITS, KERNEL_SIZE, INITIALI
     return model, history
 
 # %%
-HIDDEN_UNITS = 128
-EPOCHS = 1000
-BATCH_SIZE = 16
+HIDDEN_UNITS = 256
+EPOCHS = 2500
+BATCH_SIZE = 32
 opti = Nadam(learning_rate=0.0001)
-lossFunc = rmse
 NORM = regularizers.l2(0.1)
 INITIALIZER = HeNormal()
 KERNEL_SIZE = 3
@@ -168,7 +166,7 @@ KERNEL_SIZE = 3
 save_path = './model_save/'+'{epoch:03d}-{val_loss:.4f}.hdf5'
 checkpoint = ModelCheckpoint(filepath=save_path, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
 
-model, history = cnnModel(X_train, X_val, y_train, y_val, HIDDEN_UNITS, KERNEL_SIZE, INITIALIZER, NORM, opti, lossFunc, EPOCHS, BATCH_SIZE, checkpoint)
+model, history = cnnModel(X_train, X_val, y_train, y_val, HIDDEN_UNITS, KERNEL_SIZE, INITIALIZER, NORM, opti, EPOCHS, BATCH_SIZE, checkpoint)
 
 # %%
 # 모델 평가
@@ -180,5 +178,35 @@ plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'validation'], loc='upper right')
 plt.show()
+
+# %%
+# 모델 평가2
+plt.figure(figsize=(12,8))
+plt.plot(np.arange(1500,2500), history.history['loss'][1500:])
+plt.plot(np.arange(1500,2500), history.history['val_loss'][1500:])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'validation'], loc='upper right')
+plt.show()
+
+#%%
+# 모델 로드
+hdf5_path = './model_save/temp/obbs/0214_0114/2486-0.0675.hdf5'
+loaded_model = load_model(hdf5_path, custom_objects={'rmse': rmse})
+
+# %%
+# 모델 평가
+pred = loaded_model.predict(X_val)
+pred1 = pred.reshape((138,))
+
+ses = []
+for p, y in zip(pred1, y_val):
+    se = np.square(y-p)
+    ses.append(se)
+
+val_rmse = np.sqrt(np.mean(se))
+
+print(f"model's rmse of validation : {val_rmse}")
 
 # %%
