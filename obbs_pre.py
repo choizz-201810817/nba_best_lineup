@@ -196,7 +196,7 @@ hdf5_path = './model_save/temp/obbs/0214_0114/2486-0.0675.hdf5'
 loaded_model = load_model(hdf5_path, custom_objects={'rmse': rmse})
 
 # %%
-# 모델 평가
+# 모델 평가 (validation data로 rmse 계산)
 pred = loaded_model.predict(X_val)
 pred1 = pred.reshape((138,))
 
