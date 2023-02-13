@@ -73,7 +73,7 @@ for col in highCorrCols:
 # %%
 # columns = ["netrtg", "ts%", "pie", "poss", "def_ws", "fbps", "pitp", "pf", f"3fgm_%uast", "ft%", 
 #            f"%fta", f"%ast", "%tov", "%pf", "%pfd", "%pts", "age", "inflation_salary", "+/-"]
-columns = ["netrtg", "pitp", f"3fgm_%uast", "ft%", 
+columns = ["netrtg", "pitp", f"3fgm_%uast", "ft%", "ast/to", "dreb%", "pie", "3p%",
            "%tov", "%pf", "%pfd", "age", "inflation_salary",]
 
 
@@ -136,12 +136,12 @@ def rmse(y_true, y_pred):
 
 # %%
 HIDDEN_UNITS = 128
-EPOCHS = 5000
+EPOCHS = 4000
 BATCH_SIZE = 64
-opti = Nadam(learning_rate=0.001)
+opti = Nadam(learning_rate=0.003)
 lossFunc = rmse
 NORM = regularizers.l2(0.1)
-INPUT_DIM = 8
+INPUT_DIM = 12
 INITIALIZER = HeNormal()
 
 save_path = './model_save/'+'{epoch:03d}-{val_loss:.4f}.hdf5'
