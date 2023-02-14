@@ -9,7 +9,7 @@ import seaborn as sns
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import MinMaxScaler, LabelEncoder
+from sklearn.preprocessing import MinMaxScaler
 
 
 from tensorflow.python.keras.layers import Dense, Dropout, Conv1D, MaxPooling1D
@@ -21,56 +21,38 @@ from keras.callbacks import ModelCheckpoint
 from keras.models import load_model
 from keras import backend as K
 
-# %%
-teamDf = pd.read_csv("./data/team_stats.csv")
-teamDf['obbs'] = teamDf.w / teamDf.gp
-teamDf.season = teamDf.season.apply(lambda x: '20'+x[-2:])
-teamDf = teamDf[["team","season","obbs"]]
-teamDf
+import warnings
+warnings.filterwarnings('ignore')
 
 # %%
-plyDf = pd.read_csv("./data/NotNull.csv").drop(["Unnamed: 0", "inflation_salary"], axis=1)
+teamDf = pd.read_csv("./data/teamObbs.csv").drop(["Unnamed: 0"], axis=1)
+teamDf.season = teamDf.season.astype("str")
+teamDf.info()
+
+# %%
+plyDf = pd.read_csv("./data/NotNull.csv").drop(["Unnamed: 0", "inflation_salary", "pev"], axis=1)
+
+#%%
+tempDf = plyDf.drop(["player", "team", "season", "position"], axis=1)
+
+mmSc = MinMaxScaler()
+mmDf = pd.DataFrame(mmSc.fit_transform(tempDf), columns=tempDf.columns)
+plyDf = pd.concat([plyDf[["player", "team", "season", "position"]], mmDf], axis=1)
 
 # %%
 plyDf.groupby(["season","team","position"]).mean()
-
-# %%
-def changedTeam(x=''):
-    if x=='New Jersey Nets':
-        return 'Brooklyn Nets'
-    elif x=='New Orleans Hornets':
-        return 'New Orleans Pelicans'
-    elif x=='New Orleans/Oklahoma City Hornets':
-        return 'New Orleans Pelicans'
-    elif x=='Charlotte Bobcats':
-        return 'Charlotte Hornets'
-    elif x=='Vancouver Grizzlies':
-        return 'Memphis Grizzlies'
-    elif x=='NO/Oklahoma City Hornets':
-        return 'New Orleans Pelicans'
-    elif x=='LA Clippers':
-        return 'Los Angeles Clippers'
-    else:
-        return x
-
-# %%
-teamDf.team = teamDf.team.apply(lambda x: changedTeam(x))
-len(teamDf.team.unique())
 
 # %%
 plyDf = plyDf.drop(["obbs"],axis=1)
 plyDf.season = plyDf.season.astype("str")
 plyDf.info()
 
-# %%
-teamDf.rename(columns={'obbs':'team_obbs'}, inplace=True)
-teamDf
-
 #%%
 obbsDf = pd.merge(plyDf, teamDf, on=["team", "season"], how="inner")
 
 # %%
 groupDf = obbsDf.groupby(by=["season", "team", "position"]).mean()
+groupDf
 
 #%%
 # 5개의 포지션이 모두 존재하는 팀 데이터만 가져오기
@@ -137,7 +119,7 @@ def rmse(y_true, y_pred):
 def cnnModel(X_train, X_val, y_train, y_val, HIDDEN_UNITS, KERNEL_SIZE, INITIALIZER, NORM, opti, EPOCHS, BATCH_SIZE, checkpoint):
     model = Sequential()
     model.add(Conv1D(HIDDEN_UNITS, kernel_size=KERNEL_SIZE, input_shape=X_train.shape[1:], activation='elu', kernel_initializer=INITIALIZER))
-    model.add(MaxPooling1D(pool_size=(3)))
+    model.add(MaxPooling1D(pool_size=(2)))
     model.add(Dropout(0.1))
     model.add(Dense(128, activation='elu', kernel_regularizer=NORM))
     model.add(Dropout(0.1))
@@ -157,8 +139,8 @@ def cnnModel(X_train, X_val, y_train, y_val, HIDDEN_UNITS, KERNEL_SIZE, INITIALI
 # %%
 HIDDEN_UNITS = 256
 EPOCHS = 2500
-BATCH_SIZE = 32
-opti = Nadam(learning_rate=0.0001)
+BATCH_SIZE = 64
+opti = Nadam(learning_rate=0.00005)
 NORM = regularizers.l2(0.1)
 INITIALIZER = HeNormal()
 KERNEL_SIZE = 3
@@ -182,8 +164,19 @@ plt.show()
 # %%
 # 모델 평가2
 plt.figure(figsize=(12,8))
-plt.plot(np.arange(1500,2500), history.history['loss'][1500:])
-plt.plot(np.arange(1500,2500), history.history['val_loss'][1500:])
+plt.plot(np.arange(300,2500), history.history['loss'][300:])
+plt.plot(np.arange(300,2500), history.history['val_loss'][300:])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'validation'], loc='upper right')
+plt.show()
+
+# %%
+# 모델 평가3
+plt.figure(figsize=(12,8))
+plt.plot(np.arange(800,2500), history.history['loss'][800:])
+plt.plot(np.arange(800,2500), history.history['val_loss'][800:])
 plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
@@ -192,7 +185,7 @@ plt.show()
 
 #%%
 # 모델 로드
-hdf5_path = './model_save/temp/obbs/0214_0114/2486-0.0675.hdf5'
+hdf5_path = './model_save/2438-0.0660.hdf5'
 loaded_model = load_model(hdf5_path, custom_objects={'rmse': rmse})
 
 # %%
@@ -208,5 +201,44 @@ for p, y in zip(pred1, y_val):
 val_rmse = np.sqrt(np.mean(se))
 
 print(f"model's rmse of validation : {val_rmse}")
+
+# %%
+# 트레이드 함수
+def trade(df, outPlayer='', myTeam='', inPlayer='', oppTeam=''):
+    df1 = df.copy()
+    df1[(df1.team==myTeam)&(df1.player==outPlayer)].team=oppTeam
+    df1[(df1.team==oppTeam)&(df1.player==inPlayer)].team=myTeam
+    
+    return df1
+
+# 승률 예측 함수
+def obbsPre(model, df, team=''):
+    gDf = df.groupby(by=["season", "team", "position"]).mean()
+    teamStatsDf = gDf.loc[("2023", team), :]
+    features = teamStatsDf.to_numpy()
+    features = features.reshape((1,5,34))
+    obbsPred = model.predict(features).reshape((1,))[0]
+    
+    return obbsPred
+
+# 기존 승률과 트레이드 이후 승률 출력 함수
+def obbsChange(model, playerDf, teamDf, outPlayer='', myTeam='', inPlayer='', oppTeam=''):
+    mdf = pd.merge(playerDf, teamDf, on=['season', 'team'], how='inner')
+    gDf = mdf.groupby(by=['season', 'team', 'position']).mean()
+    existObbs = gDf.loc[('2023', myTeam), :]['team_obbs'].to_numpy()[0] # 기존 승률
+    
+    tradedDf = trade(playerDf, outPlayer, myTeam, inPlayer, oppTeam)
+    obbsPred = obbsPre(model, tradedDf, myTeam)
+    
+    print(f"{myTeam}의 기존 승률 : {existObbs}")
+    print(f"{myTeam}의 트레이드 이후 승률 : {obbsPred}")
+
+# %%
+outPlayer="Isaiah Todd"
+myTeam="Washington Wizards"
+inPlayer="Udonis Haslem"
+oppTeam="Miami Heat"
+
+obbsChange(loaded_model, plyDf, teamDf, outPlayer, myTeam, inPlayer, oppTeam)
 
 # %%
