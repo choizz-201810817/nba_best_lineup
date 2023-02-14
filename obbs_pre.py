@@ -27,9 +27,7 @@ warnings.filterwarnings('ignore')
 # %%
 teamDf = pd.read_csv("./data/teamObbs.csv").drop(["Unnamed: 0"], axis=1)
 teamDf.season = teamDf.season.astype("str")
-teamDf.info()
 
-# %%
 plyDf = pd.read_csv("./data/NotNull.csv").drop(["Unnamed: 0", "inflation_salary", "pev"], axis=1)
 
 #%%
@@ -38,19 +36,10 @@ tempDf = plyDf.drop(["player", "team", "season", "position"], axis=1)
 mmSc = MinMaxScaler()
 mmDf = pd.DataFrame(mmSc.fit_transform(tempDf), columns=tempDf.columns)
 plyDf = pd.concat([plyDf[["player", "team", "season", "position"]], mmDf], axis=1)
-
-# %%
-plyDf.groupby(["season","team","position"]).mean()
-
-# %%
-plyDf = plyDf.drop(["obbs"],axis=1)
 plyDf.season = plyDf.season.astype("str")
-plyDf.info()
 
 #%%
 obbsDf = pd.merge(plyDf, teamDf, on=["team", "season"], how="inner")
-
-# %%
 groupDf = obbsDf.groupby(by=["season", "team", "position"]).mean()
 groupDf
 

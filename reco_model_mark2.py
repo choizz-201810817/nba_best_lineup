@@ -4,12 +4,12 @@ import numpy as np
 import pandas as pd
 
 #%%
-origin_df = pd.read_csv('./data/new_df2.csv')
-origin_df = origin_df.drop(['index'],axis=1)
-origin_df
+# origin_df = pd.read_csv('./data/new_df2.csv')
+# origin_df = origin_df.drop(['index'],axis=1)
+# origin_df
 
 # %%
-def totalMeans(df=origin_df, season=2023):
+def totalMeans(df, season=2023):
     positions = df.position.unique()
 
     posMeans = {}
@@ -20,7 +20,7 @@ def totalMeans(df=origin_df, season=2023):
     return posMeans
 
 
-def teamMeans(df=origin_df, team='Chicago Bulls', season=2023):
+def teamMeans(df, team='Chicago Bulls', season=2023):
     tempDf = df[(df.team==team)&(df.season==season)]
     positions = tempDf.position.unique()
 
@@ -33,7 +33,7 @@ def teamMeans(df=origin_df, team='Chicago Bulls', season=2023):
 
 
 ## 포지션별 전체 선수 평균과 팀내 평균을 비교 후 전체 평균보다 낮은 포지션 추출
-def compareMeans(df=origin_df, team='Chicago Bulls', season=2023):
+def compareMeans(df, team='Chicago Bulls', season=2023):
     total = totalMeans(df, season)
     team = teamMeans(df, team, season)
     
@@ -45,12 +45,15 @@ def compareMeans(df=origin_df, team='Chicago Bulls', season=2023):
     return positions
     
     
-def playerRecommend(df=origin_df, team='Chicago Bulls', season=2023, margin=1.1, threshold=0.99):
+def playerRecommend(df, team='Chicago Bulls', season=2023, margin=0.2, threshold=0.99):
     ## 특정 팀의 평균 이하 포지션 추출
     poses = compareMeans(df, team, season)
+    for i, pose in enumerate(poses):
+        print(f"추천 포지션 {i} : {pose}")
     
+    pos = input("원하는 포지션을 입력해주세요 : ")
     ## 방출 대상 포지션의 선수목록 추출
-    emissionDf = df[(df['team']==team)&(df['position']==poses[0])&(df['season']==season)]
+    emissionDf = df[(df['team']==team)&(df['position']==pos)&(df['season']==season)]
 
     ## 방출 대상 포지션의 스탯들의 평균값 도출
     means = emissionDf.mean()
@@ -62,11 +65,13 @@ def playerRecommend(df=origin_df, team='Chicago Bulls', season=2023, margin=1.1,
     
     ## 방출 대상 선수의 연봉 추출 및 +10% 값 저장
     emiSal = emissionPlayer['inflation_salary']
-    maxSal = emiSal.values[0] * margin
+    maxSal = emiSal.values[0] + (emiSal.values[0]*margin)
+    minSal = emiSal.values[0] - (emiSal.values[0]*margin)
     
-    ##  특정팀 외의 선수들 중 방출 대상 선수와 같은 포지션이면서 연봉 상한 10% 미만의 선수들 불러오기
+    ##  특정팀 외의 선수들 중 방출 대상 선수와 같은 포지션이면서 연봉 20% 이내의 선수들 불러오기
     targetPlysDf = df.drop(df[df.team==team].index, axis=0)
-    targetPlysDf = targetPlysDf[(targetPlysDf['season']==season)&(targetPlysDf['position']==poses[0])&(targetPlysDf['inflation_salary']<maxSal)]
+    targetPlysDf = targetPlysDf[(targetPlysDf['season']==season)&(targetPlysDf['position']==poses[0])
+                                &(targetPlysDf['inflation_salary']<=maxSal)&(targetPlysDf['inflation_salary']>=minSal)]
     
     ## 트레이드 대상 포지션의 평균값과 targetPlyDf를 concat
     targetPlysDf1 = targetPlysDf[meanDf.columns]
@@ -87,17 +92,23 @@ def playerRecommend(df=origin_df, team='Chicago Bulls', season=2023, margin=1.1,
     return emissionPlayer, resultDf
 
 
-# %%
-team = 'Memphis Grizzlies'
-season = 2023
-margin = 1.1
-th = 0.99
+# # %%
+# team = 'Memphis Grizzlies'
+# season = 2023
+# margin = 1.1
+# th = 0.99
 
-emissionPlayer, recoDf = playerRecommend(df=origin_df, team=team, season=season, margin=margin, threshold=th)
+# emissionPlayer, recoDf = playerRecommend(df=origin_df, team=team, season=season, margin=margin, threshold=th)
+
+# # %%
+# emissionPlayer
+
+# # %%
+# recoDf
+
+# # %%
 
 # %%
-emissionPlayer
-
-# %%
-recoDf
+dd = input("포지션 선택 : ")
+print(dd)
 # %%
