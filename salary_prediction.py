@@ -151,7 +151,6 @@ model, history = salPredictModel(X_train, y_train, X_val, y_val, HIDDEN_UNITS, I
                                  EPOCHS, opti, lossFunc, NORM, BATCH_SIZE, INITIALIZER, checkpoint)
 
 
-
 #%%
 # 모델 평가
 plt.figure(figsize=(12,8))
