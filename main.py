@@ -21,7 +21,7 @@ hdf5_path = './model_save/temp/obbs/0214_1247/2438-0.0660.hdf5'
 loaded_model = load_model(hdf5_path, custom_objects={'rmse': rmse})
 
 # %%
-# Memphis Grizzlies
+# Utah Jazz
 team=input('원하는 팀을 입력하십시오 : ')
 emissionPlyer, recoList = playerRecommend(df=plyDf, team=team)
 
@@ -32,11 +32,14 @@ for i, (recoTeam, recoPly) in enumerate(zip(recoList.team, recoList.player)):
     print(f"영입 추천 선수 {i+1} : {recoTeam}의 {recoPly}")
 
 #%%
-outPlayer="Desmond Bane"
-myTeam="Memphis Grizzlies"
-inPlayer="Josh Christopher"
-oppTeam="Houston Rockets"
+myTeam="Utah Jazz"
+outPlayer="Leandro Bolmaro"
+oppTeam="Milwaukee Bucks"
+inPlayer="Jevon Carter"
 
 existObbs, obbsPred = obbsChange(loaded_model, plyDf, teamDf, outPlayer, myTeam, inPlayer, oppTeam)
 
 # %%
+teamDf.team.unique()
+# %%
+

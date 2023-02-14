@@ -20,20 +20,20 @@ def totalMeans(df, season=2023):
     return posMeans
 
 
-def teamMeans(df, team='Chicago Bulls', season=2023):
+def teamMeans(df, team='', season=2023):
     tempDf = df[(df.team==team)&(df.season==season)]
     positions = tempDf.position.unique()
 
     posMeans = {}
     for pos in positions:
-        posMean = tempDf[(tempDf['position']==pos)].pev.mean()
+        posMean = tempDf[tempDf['position']==pos].pev.mean()
         posMeans[pos] = posMean
         
     return posMeans
 
 
 ## 포지션별 전체 선수 평균과 팀내 평균을 비교 후 전체 평균보다 낮은 포지션 추출
-def compareMeans(df, team='Chicago Bulls', season=2023):
+def compareMeans(df, team='', season=2023):
     total = totalMeans(df, season)
     team = teamMeans(df, team, season)
     
@@ -45,7 +45,7 @@ def compareMeans(df, team='Chicago Bulls', season=2023):
     return positions
     
     
-def playerRecommend(df, team='Chicago Bulls', season=2023, margin=0.2, threshold=0.99):
+def playerRecommend(df, team='', season=2023, margin=0.2, threshold=0.99):
     ## 특정 팀의 평균 이하 포지션 추출
     poses = compareMeans(df, team, season)
     for i, pose in enumerate(poses):
@@ -59,11 +59,11 @@ def playerRecommend(df, team='Chicago Bulls', season=2023, margin=0.2, threshold
     means = emissionDf.mean()
     meanDf = pd.DataFrame(means).T
 
-    ## 방출 대상 선수 선정
-    emissionDf = emissionDf.sort_values(by='pev', ascending=False).reset_index(drop=True)
+    ## 방출 대상 선수 선정 (해당 포지션에서 pev가 가장 낮은 선수)
+    emissionDf = emissionDf.sort_values(by='pev', ascending=True).reset_index(drop=True)
     emissionPlayer = emissionDf.iloc[[0],:]
     
-    ## 방출 대상 선수의 연봉 추출 및 +10% 값 저장
+    ## 방출 대상 선수의 연봉 추출 및 +-20% 값 저장
     emiSal = emissionPlayer['inflation_salary']
     maxSal = emiSal.values[0] + (emiSal.values[0]*margin)
     minSal = emiSal.values[0] - (emiSal.values[0]*margin)
@@ -83,7 +83,7 @@ def playerRecommend(df, team='Chicago Bulls', season=2023, margin=0.2, threshold
     cosDf = pd.DataFrame(cosineSim, index=mtxDf.index, columns=mtxDf.index)[0]
     cosDf = cosDf.drop([0], axis=0)
     
-    ## 
+    ## pev가 높은 순서대로 선추 추천
     resultDf = pd.merge(targetPlysDf, cosDf, left_index=True, right_index=True, how='inner')
     resultDf = resultDf.rename(columns={0:'cosine_sim'})
     resultDf = resultDf.sort_values(by='pev', ascending=False)
