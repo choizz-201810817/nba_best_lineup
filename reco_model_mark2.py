@@ -49,7 +49,7 @@ def playerRecommend(df, team='Chicago Bulls', season=2023, margin=0.2, threshold
     ## 특정 팀의 평균 이하 포지션 추출
     poses = compareMeans(df, team, season)
     for i, pose in enumerate(poses):
-        print(f"추천 포지션 {i} : {pose}")
+        print(f"추천 포지션 {i+1} : {pose}")
     
     pos = input("원하는 포지션을 입력해주세요 : ")
     ## 방출 대상 포지션의 선수목록 추출
@@ -106,9 +106,4 @@ def playerRecommend(df, team='Chicago Bulls', season=2023, margin=0.2, threshold
 # # %%
 # recoDf
 
-# # %%
-
-# %%
-dd = input("포지션 선택 : ")
-print(dd)
 # %%

@@ -26,9 +26,9 @@ warnings.filterwarnings('ignore')
 
 # %%
 teamDf = pd.read_csv("./data/teamObbs.csv").drop(["Unnamed: 0"], axis=1)
-teamDf.season = teamDf.season.astype("str")
+# teamDf.season = teamDf.season.astype("str")
 
-plyDf = pd.read_csv("./data/NotNull.csv").drop(["Unnamed: 0", "inflation_salary", "pev"], axis=1)
+plyDf = pd.read_csv("./data/NotNull.csv").drop(["Unnamed: 0", "inflation_salary", "obbs", "pev"], axis=1)
 
 #%%
 tempDf = plyDf.drop(["player", "team", "season", "position"], axis=1)
@@ -36,7 +36,7 @@ tempDf = plyDf.drop(["player", "team", "season", "position"], axis=1)
 mmSc = MinMaxScaler()
 mmDf = pd.DataFrame(mmSc.fit_transform(tempDf), columns=tempDf.columns)
 plyDf = pd.concat([plyDf[["player", "team", "season", "position"]], mmDf], axis=1)
-plyDf.season = plyDf.season.astype("str")
+# plyDf.season = plyDf.season.astype("str")
 
 #%%
 obbsDf = pd.merge(plyDf, teamDf, on=["team", "season"], how="inner")
@@ -102,7 +102,7 @@ print(f"y_val's shape : {y_val.shape}")
 # %%
 # rmse 함수 정의
 def rmse(y_true, y_pred):
-        return K.sqrt(K.mean(K.square(y_pred - y_true))) 
+    return K.sqrt(K.mean(K.square(y_pred - y_true))) 
     
 # %%
 def cnnModel(X_train, X_val, y_train, y_val, HIDDEN_UNITS, KERNEL_SIZE, INITIALIZER, NORM, opti, EPOCHS, BATCH_SIZE, checkpoint):
@@ -174,7 +174,7 @@ plt.show()
 
 #%%
 # 모델 로드
-hdf5_path = './model_save/2438-0.0660.hdf5'
+hdf5_path = './model_save/temp/obbs/0214_1247/2438-0.0660.hdf5'
 loaded_model = load_model(hdf5_path, custom_objects={'rmse': rmse})
 
 # %%
@@ -191,43 +191,5 @@ val_rmse = np.sqrt(np.mean(se))
 
 print(f"model's rmse of validation : {val_rmse}")
 
-# %%
-# 트레이드 함수
-def trade(df, outPlayer='', myTeam='', inPlayer='', oppTeam=''):
-    df1 = df.copy()
-    df1[(df1.team==myTeam)&(df1.player==outPlayer)].team=oppTeam
-    df1[(df1.team==oppTeam)&(df1.player==inPlayer)].team=myTeam
-    
-    return df1
-
-# 승률 예측 함수
-def obbsPre(model, df, team=''):
-    gDf = df.groupby(by=["season", "team", "position"]).mean()
-    teamStatsDf = gDf.loc[("2023", team), :]
-    features = teamStatsDf.to_numpy()
-    features = features.reshape((1,5,34))
-    obbsPred = model.predict(features).reshape((1,))[0]
-    
-    return obbsPred
-
-# 기존 승률과 트레이드 이후 승률 출력 함수
-def obbsChange(model, playerDf, teamDf, outPlayer='', myTeam='', inPlayer='', oppTeam=''):
-    mdf = pd.merge(playerDf, teamDf, on=['season', 'team'], how='inner')
-    gDf = mdf.groupby(by=['season', 'team', 'position']).mean()
-    existObbs = gDf.loc[('2023', myTeam), :]['team_obbs'].to_numpy()[0] # 기존 승률
-    
-    tradedDf = trade(playerDf, outPlayer, myTeam, inPlayer, oppTeam)
-    obbsPred = obbsPre(model, tradedDf, myTeam)
-    
-    print(f"{myTeam}의 기존 승률 : {existObbs}")
-    print(f"{myTeam}의 트레이드 이후 승률 : {obbsPred}")
-
-# %%
-outPlayer="Isaiah Todd"
-myTeam="Washington Wizards"
-inPlayer="Udonis Haslem"
-oppTeam="Miami Heat"
-
-obbsChange(loaded_model, plyDf, teamDf, outPlayer, myTeam, inPlayer, oppTeam)
 
 # %%
