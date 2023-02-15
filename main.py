@@ -33,13 +33,10 @@ for i, (recoTeam, recoPly) in enumerate(zip(recoList.team, recoList.player)):
 
 #%%
 myTeam="Utah Jazz"
-outPlayer="Leandro Bolmaro"
-oppTeam="Milwaukee Bucks"
-inPlayer="Jevon Carter"
+outPlayer="Rudy Gay"
+oppTeam="New York Knicks"
+inPlayer="Cam Reddish"
 
 existObbs, obbsPred = obbsChange(loaded_model, plyDf, teamDf, outPlayer, myTeam, inPlayer, oppTeam)
 
 # %%
-teamDf.team.unique()
-# %%
-

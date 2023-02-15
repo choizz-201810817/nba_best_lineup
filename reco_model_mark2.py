@@ -32,19 +32,22 @@ def teamMeans(df, team='', season=2023):
     return posMeans
 
 
-## 포지션별 전체 선수 평균과 팀내 평균을 비교 후 전체 평균보다 낮은 포지션 추출
+## 포지션별 전체 선수 pev평균과 팀내 pev평균을 비교 후 전체 평균보다 낮은 포지션들을 낮은 순서대로 추출(오름차순 정렬)
 def compareMeans(df, team='', season=2023):
     total = totalMeans(df, season)
     team = teamMeans(df, team, season)
     
-    positions = []
+    posDict = {}
     for pos in team.keys():
         if (total[pos] > team[pos]):
-            positions.append(pos)
-            
+            posDict[pos] = team[pos]
+    
+    sortedPos = sorted(posDict.items(), key=lambda item: item[1])    
+    positions = [pos[0] for pos in sortedPos]
+    
     return positions
-    
-    
+
+
 def playerRecommend(df, team='', season=2023, margin=0.2, threshold=0.99):
     ## 특정 팀의 평균 이하 포지션 추출
     poses = compareMeans(df, team, season)
@@ -68,7 +71,7 @@ def playerRecommend(df, team='', season=2023, margin=0.2, threshold=0.99):
     maxSal = emiSal.values[0] + (emiSal.values[0]*margin)
     minSal = emiSal.values[0] - (emiSal.values[0]*margin)
     
-    ##  특정팀 외의 선수들 중 방출 대상 선수와 같은 포지션이면서 연봉 20% 이내의 선수들 불러오기
+    ## 특정팀 외의 선수들 중 방출 대상 선수와 같은 포지션이면서 연봉 20% 이내의 선수들 불러오기
     targetPlysDf = df.drop(df[df.team==team].index, axis=0)
     targetPlysDf = targetPlysDf[(targetPlysDf['season']==season)&(targetPlysDf['position']==poses[0])
                                 &(targetPlysDf['inflation_salary']<=maxSal)&(targetPlysDf['inflation_salary']>=minSal)]
@@ -83,14 +86,13 @@ def playerRecommend(df, team='', season=2023, margin=0.2, threshold=0.99):
     cosDf = pd.DataFrame(cosineSim, index=mtxDf.index, columns=mtxDf.index)[0]
     cosDf = cosDf.drop([0], axis=0)
     
-    ## pev가 높은 순서대로 선추 추천
+    ## pev 혹은 obbs가 높은 순서대로 선추 추천
     resultDf = pd.merge(targetPlysDf, cosDf, left_index=True, right_index=True, how='inner')
     resultDf = resultDf.rename(columns={0:'cosine_sim'})
     resultDf = resultDf.sort_values(by='pev', ascending=False)
     resultDf = resultDf[resultDf['cosine_sim']>=threshold].reset_index(drop=True)
     
     return emissionPlayer, resultDf
-
 
 # # %%
 # team = 'Memphis Grizzlies'
