@@ -141,8 +141,8 @@ plt.legend(['train', 'test'], loc='upper left')
 plt.show()
 
 # %%
-hdf5_path = './model_save/temp/521-0.8012.hdf5'
-loaded_model = load_model(hdf5_path, custom_objects={'rmse': rmse})
+hdf5_path = './model_save/temp/position/521-0.8012.hdf5'
+loaded_model = load_model(hdf5_path)
 
 loaded_model.evaluate(X_val, y_val, verbose=1)
 
