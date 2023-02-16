@@ -73,7 +73,7 @@ def playerRecommend(df, team='', season=2023, margin=0.2, threshold=0.99):
     
     ## 특정팀 외의 선수들 중 방출 대상 선수와 같은 포지션이면서 연봉 20% 이내의 선수들 불러오기
     targetPlysDf = df.drop(df[df.team==team].index, axis=0)
-    targetPlysDf = targetPlysDf[(targetPlysDf['season']==season)&(targetPlysDf['position']==pos)
+    targetPlysDf = targetPlysDf[(targetPlysDf['season']==season)&(targetPlysDf['position']==poses[0])
                                 &(targetPlysDf['inflation_salary']<=maxSal)&(targetPlysDf['inflation_salary']>=minSal)]
     
     ## 트레이드 대상 포지션의 평균값과 targetPlyDf를 concat

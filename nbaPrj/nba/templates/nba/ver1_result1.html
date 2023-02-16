@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div style="background-color:#0d47a1;">
+        <h1>좋아하는 팀을 선택해주세요.</h1>
+    </div>
+        <div id = 'contents' style="text-align:center;">
+            <div>
+                <form method="POST">
+                    <br>
+                    {% csrf_token %}
+                    팀 :
+                    <select name="team">
+                        {% for tmp in teams %}
+                            <option name='team' value='{{tmp}}'>{{tmp}}</option>
+                        {% endfor %}
+                    </select><br><br>
+                    <br>
+                    {% csrf_token %}
+                    포지션 :
+                    <select name="pos">
+                        {% for pos in poses %}
+                            <option name='pos' value='{{pos}}'>{{pos}}</option>
+                        {% endfor %}
+                    </select><br><br>
+                    <input class="btn btn-success" type="submit" value="Pick!">
+                </form>
+            </div>
+        </div>
+</body>
+</html>

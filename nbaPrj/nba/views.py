@@ -1,14 +1,31 @@
-#%%
+from django.shortcuts import render
+
 from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
+
+# Create your views here.
+from reco_model_mark2 import playerRecommend
+from obbs_pre_module import obbsChange, rmse, trade
+
 import pandas as pd
+import numpy as np
 
-#%%
-# origin_df = pd.read_csv('./data/new_df2.csv')
-# origin_df = origin_df.drop(['index'],axis=1)
-# origin_df
+from sklearn.preprocessing import MinMaxScaler
 
-# %%
+from tensorflow.python.keras.metrics import RootMeanSquaredError
+from keras.models import load_model
+
+import warnings
+warnings.filterwarnings('ignore')
+
+
+plyDf = pd.read_csv(f"../data/NotNull_pev.csv").drop(["index"], axis=1)
+teamDf = pd.read_csv("../data/teamObbs.csv").drop(["Unnamed: 0"], axis=1)
+
+hdf5_path = '../model_save/temp/obbs/0214_1247/2438-0.0660.hdf5'
+loaded_model = load_model(hdf5_path, custom_objects={'rmse': rmse})
+
+teams = teamDf.team.unique().tolist()
+
 def totalMeans(df, season=2023):
     positions = df.position.unique()
 
@@ -31,7 +48,6 @@ def teamMeans(df, team='', season=2023):
         
     return posMeans
 
-
 ## 포지션별 전체 선수 pev평균과 팀내 pev평균을 비교 후 전체 평균보다 낮은 포지션들을 낮은 순서대로 추출(오름차순 정렬)
 def compareMeans(df, team='', season=2023):
     total = totalMeans(df, season)
@@ -47,20 +63,9 @@ def compareMeans(df, team='', season=2023):
     
     return positions
 
-
-def playerRecommend(df, team='', season=2023, margin=0.2, threshold=0.99):
-    ## 특정 팀의 평균 이하 포지션 추출
-    poses = compareMeans(df, team, season)
-    for i, pose in enumerate(poses):
-        print(f"추천 포지션 {i+1} : {pose}")
-    
-    pos = input("원하는 포지션을 입력해주세요 : ")
+def playerRecommend(df, team='', pos='', season=2023, margin=0.2, threshold=0.99):    
     ## 방출 대상 포지션의 선수목록 추출
     emissionDf = df[(df['team']==team)&(df['position']==pos)&(df['season']==season)]
-
-    ## 방출 대상 포지션의 스탯들의 평균값 도출
-    means = emissionDf.mean()
-    meanDf = pd.DataFrame(means).T
 
     ## 방출 대상 선수 선정 (해당 포지션에서 pev가 가장 낮은 선수)
     emissionDf = emissionDf.sort_values(by='pev', ascending=True).reset_index(drop=True)
@@ -75,6 +80,10 @@ def playerRecommend(df, team='', season=2023, margin=0.2, threshold=0.99):
     targetPlysDf = df.drop(df[df.team==team].index, axis=0)
     targetPlysDf = targetPlysDf[(targetPlysDf['season']==season)&(targetPlysDf['position']==pos)
                                 &(targetPlysDf['inflation_salary']<=maxSal)&(targetPlysDf['inflation_salary']>=minSal)]
+    
+    ## 방출 대상 포지션의 스탯들의 평균값 도출
+    means = emissionDf.mean()
+    meanDf = pd.DataFrame(means).T
     
     ## 트레이드 대상 포지션의 평균값과 targetPlyDf를 concat
     targetPlysDf1 = targetPlysDf[meanDf.columns]
@@ -94,18 +103,43 @@ def playerRecommend(df, team='', season=2023, margin=0.2, threshold=0.99):
     
     return emissionPlayer, resultDf
 
-# # %%
-# team = 'Memphis Grizzlies'
-# season = 2023
-# margin = 1.1
-# th = 0.99
+def index(request):
+    return render(request, 'nba/index.html')
 
-# emissionPlayer, recoDf = playerRecommend(df=origin_df, team=team, season=season, margin=margin, threshold=th)
+def ver1(request):
+    if request.method == 'POST':
+        team = request.POST.get('team', '')
+        pos = request.POST.get('pos', '')
+        poses = compareMeans(df=plyDf, team=team)
+        
+        if pos=='':
+            return render(request, "nba/ver1_result1.html", {'teams' : [team], 'poses' : poses})
+        else:
+            emissionPlayer, resultDf = playerRecommend(plyDf, team, pos)
+            emPlayer = emissionPlayer.player.values[0]
+            recos = resultDf[["team", "player"]].values.tolist()
+            
+            return render(request, "nba/ver1_result2.html", {'teams' : [team],
+                                                            'poses' : [pos],
+                                                            'emPlayer' : emPlayer,
+                                                            'recos' : recos}) 
 
-# # %%
-# emissionPlayer
+    else:
+        return render(request, 'nba/ver1.html', {'teams' : teams})
 
-# # %%
-# recoDf
+    
+# emPly = emissionPlyer.player.values[0]
+# print(f"방출 대상 선수 : {team}의 {emPly}\n\n")
 
-# %%
+# recoTeams = []
+# recoPlys = []
+# for recoTeam, recoPly in zip(recoList.team, recoList.player):
+#     recoTeams.append(recoTeam)
+#     recoPlys.append(recoPly)
+    
+# recoResult = {
+#     'myTeam' : team,
+#     'emissionPlyer' : emPly,
+#     'recoTeams' : recoTeams,
+#     'recoPlyers' : recoPlys
+# }
