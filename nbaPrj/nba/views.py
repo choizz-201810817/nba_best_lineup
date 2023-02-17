@@ -13,9 +13,11 @@ from sklearn.preprocessing import MinMaxScaler
 
 from tensorflow.python.keras.metrics import RootMeanSquaredError
 from keras.models import load_model
+from keras import backend as K
 
 import warnings
 warnings.filterwarnings('ignore')
+
 
 
 plyDf = pd.read_csv(f"../data/NotNull_pev.csv").drop(["index"], axis=1)
@@ -103,6 +105,53 @@ def playerRecommend(df, team='', pos='', season=2023, margin=0.2, threshold=0.99
     
     return emissionPlayer, resultDf
 
+# rmse 함수 정의
+def rmse(y_true, y_pred):
+    return K.sqrt(K.mean(K.square(y_pred - y_true))) 
+
+# 스케일링(정규화) 함수
+def mmsc(df):
+    df1 = df.drop(["inflation_salary", "obbs", "pev", "player", "team", "position", "season"], axis=1)
+    mmSc = MinMaxScaler()
+    mmdf = pd.DataFrame(mmSc.fit_transform(df1), columns=df1.columns)
+    cdf = pd.concat([df[["player", "team", "season", "position"]], mmdf], axis=1)
+    resultDf = cdf[cdf.season==2023]
+
+    return resultDf
+
+# 트레이드 함수
+def trade(df, outPlayer='', myTeam='', inPlayer='', oppTeam=''):
+    df1 = df.copy()
+    df1.loc[(df1.team==myTeam)&(df1.player==outPlayer), 'team']=oppTeam
+    df1.loc[(df1.team==oppTeam)&(df1.player==inPlayer), 'team']=myTeam
+    
+    return df1
+
+# 승률 예측 함수
+def obbsPre(model, df, team=''):
+    gDf = df.groupby(by=["season", "team", "position"]).mean()
+    teamStatsDf = gDf.loc[(2023, team), :]
+    features = teamStatsDf.to_numpy()
+    features = features.reshape((1,5,34))
+    obbsPred = model.predict(features).reshape((1,))[0]
+    
+    return obbsPred
+
+# 기존 승률과 트레이드 이후 승률 출력 함수
+def obbsChange(model, playerDf, teamDf, outPlayer='', myTeam='', inPlayer='', oppTeam=''):
+    mdf = pd.merge(playerDf, teamDf, on=['season', 'team'], how='inner')
+    gDf = mdf.groupby(by=['season', 'team', 'position']).mean()
+    existObbs = gDf.loc[(2023, myTeam), :]['team_obbs'].to_numpy()[0] # 기존 승률
+    
+    mmdf = mmsc(playerDf)
+    tradedDf = trade(mmdf, outPlayer, myTeam, inPlayer, oppTeam)
+    obbsPred = obbsPre(model, tradedDf, myTeam)
+    
+    # print(f"{myTeam}의 기존 승률 : {existObbs}")
+    # print(f"{myTeam}의 트레이드 이후 승률 : {obbsPred}")
+
+    return np.round(existObbs,3), np.round(obbsPred,3)
+
 def index(request):
     return render(request, 'nba/index.html')
 
@@ -111,19 +160,47 @@ def ver1(request):
         team = request.POST.get('team', '')
         pos = request.POST.get('pos', '')
         poses = compareMeans(df=plyDf, team=team)
+        emplayer = request.POST.get('emplayer', '')
+        selected = request.POST.get('select', '')            
         
-        if pos=='':
+        if (len(pos)<1):
             return render(request, "nba/ver1_result1.html", {'teams' : [team], 'poses' : poses})
-        else:
+        
+        elif (len(pos)>=1)&(len(selected)<1):
             emissionPlayer, resultDf = playerRecommend(plyDf, team, pos)
             emPlayer = emissionPlayer.player.values[0]
             recos = resultDf[["team", "player"]].values.tolist()
             
             return render(request, "nba/ver1_result2.html", {'teams' : [team],
                                                             'poses' : [pos],
-                                                            'emPlayer' : emPlayer,
-                                                            'recos' : recos}) 
+                                                            'emPlayer' : [emPlayer],
+                                                            'recos' : recos})
+            
+        elif (len(pos)>=1)&(len(selected)>=1):
+            table = str.maketrans("[' ]", '    ')
+            selected = selected.translate(table).replace(' ','')
+            selected = selected.split(',')
+            selTeam = selected[0]
+            selPly = selected[1]
+            existObbs, obbsPred = obbsChange(loaded_model, plyDf, teamDf, emplayer, team, selPly, selTeam)
+            
+            return render(request, "nba/ver1_result3.html", {'teams' : [team],
+                                                            'poses' : [pos],
+                                                            'emPlayer' : [emplayer],
+                                                            'recos' : [selected],
+                                                            'existObbs' : existObbs,
+                                                            'obbsPred' : obbsPred})
 
+        # else:
+        #     emissionPlayer, resultDf = playerRecommend(plyDf, team, pos)
+        #     emPlayer = emissionPlayer.player.values[0]
+        #     recos = resultDf[["team", "player"]].values.tolist()
+            
+        #     return render(request, "nba/ver1_result2.html", {'teams' : [team],
+        #                                                     'poses' : [pos],
+        #                                                     'emPlayer' : [emPlayer],
+        #                                                     'recos' : recos})
+        
     else:
         return render(request, 'nba/ver1.html', {'teams' : teams})
 

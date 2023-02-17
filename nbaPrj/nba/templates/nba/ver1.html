@@ -22,15 +22,29 @@
                         {% endfor %}
                     </select><br><br>
                     <input class="btn btn-success" type="submit" value="Pick!">
-                    <br>
-                    {% csrf_token %}
-                    포지션 :
-                    <select name="pos">
-                        {% for pos in poses %}
-                            <option name='pos' value='{{pos}}'>{{pos}}</option>
-                        {% endfor %}
-                    </select><br><br>
                 </form>
+                <br>
+                {% csrf_token %}
+                포지션 :
+                <select name="pos">
+                    {% for pos in poses %}
+                        <option name='pos' value='{{pos}}'>{{pos}}</option>
+                    {% endfor %}
+                </select><br><br>
+                {% csrf_token %}
+                추천 선수 :
+                <select name="emplayer">
+                    {% for emp in emPlayer %}
+                        <option name='emplayer' value='{{emp}}'>{{teams.0}} : {{emp}}</option>
+                    {% endfor %}
+                </select><br><br>
+                {% csrf_token %}
+                영입 대상 :
+                <select name="select">
+                    {% for reco in recos %}
+                        <option name='select' value='{{reco}}'>{{reco.0}} : {{reco.1}}</option>
+                    {% endfor %}
+                </select><br><br>
             </div>
         </div>
 </body>

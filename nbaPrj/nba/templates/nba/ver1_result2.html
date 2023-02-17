@@ -12,24 +12,39 @@
     </div>
         <div id = 'contents' style="text-align:center;">
             <div>
-                <br>
-                팀 :
-                <select name="team">
-                    {% for tmp in teams %}
-                        <option name='team' value='{{tmp}}'>{{tmp}}</option>
-                    {% endfor %}
-                </select><br><br>
-                <br>
-                포지션 :
-                <select name="pos">
-                    {% for pos in poses %}
-                        <option name='pos' value='{{pos}}'>{{pos}}</option>
-                    {% endfor %}
-                </select><br><br>
-                <h3>{{emPlayer}}</h3><br><br>
-                {% for reco in recos %}
-                    <h3>{{reco.0}} : {{reco.1}}</h3>
-                {% endfor %}
+                <form method="POST">
+                    <br>
+                    {% csrf_token %}
+                    팀 :
+                    <select name="team">
+                        {% for tmp in teams %}
+                            <option name='team' value='{{tmp}}'>{{tmp}}</option>
+                        {% endfor %}
+                    </select><br><br>
+                    <br>
+                    {% csrf_token %}
+                    포지션 :
+                    <select name="pos">
+                        {% for pos in poses %}
+                            <option name='pos' value='{{pos}}'>{{pos}}</option>
+                        {% endfor %}
+                    </select><br><br>
+                    {% csrf_token %}
+                    방출 선수 :
+                    <select name="emplayer">
+                        {% for emp in emPlayer %}
+                            <option name='emplayer' value='{{emp}}'>{{teams.0}} : {{emp}}</option>
+                        {% endfor %}
+                    </select><br><br>
+                    {% csrf_token %}
+                    영입 대상 :
+                    <select name="select">
+                        {% for reco in recos %}
+                            <option name='select' value='{{reco}}'>{{reco.0}} : {{reco.1}}</option>
+                        {% endfor %}
+                    </select><br><br>
+                    <input class="btn btn-success" type="submit" value="Pick!">
+                </form>
             </div>
         </div>
 </body>
