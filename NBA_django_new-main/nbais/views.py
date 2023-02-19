@@ -179,8 +179,9 @@ def index(request):
                                                             'recos' : recos})
             
         elif (len(pos)>=1)&(len(selected)>=1):
-            table = str.maketrans("[' ]", '    ')
-            selected = selected.translate(table).replace(' ','')
+            print(selected)
+            # table = str.maketrans("[' ]", '    ')
+            # selected = selected.translate(table)
             selected = selected.split(',')
             selTeam = selected[0]
             selPly = selected[1]
@@ -193,16 +194,6 @@ def index(request):
                                                             'existObbs' : existObbs,
                                                             'obbsPred' : obbsPred})
 
-        # else:
-        #     emissionPlayer, resultDf = playerRecommend(plyDf, team, pos)
-        #     emPlayer = emissionPlayer.player.values[0]
-        #     recos = resultDf[["team", "player"]].values.tolist()
-            
-        #     return render(request, "nba/ver1_result2.html", {'teams' : [team],
-        #                                                     'poses' : [pos],
-        #                                                     'emPlayer' : [emPlayer],
-        #                                                     'recos' : recos})
-        
     else:
         return render(request, 'nbais/index.html', {'teams' : teams})
 

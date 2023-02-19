@@ -255,7 +255,7 @@
                                       {% csrf_token %}
                                       <select class="form-select" id="floatingSelectGrid" name='pos'>
                                         {% for pos in poses %}
-                                            <option name='pos' value='{{pos}}'>{{pos}}</option>
+                                          <option name='pos' value='{{pos}}'>{{pos}}</option>
                                         {% endfor %}
                                       </select>
                                       <label for="floatingInputGrid">Choose Team</label>
@@ -266,7 +266,7 @@
                                       {% csrf_token %}
                                       <select class="form-select" id="floatingSelectGrid" name="emplayer">
                                         {% for emp in emPlayer %}
-                                            <option name='emplayer' value='{{emp}}'>{{teams.0}} : {{emp}}</option>
+                                          <option name='emplayer' value='{{emp}}'>{{teams.0}}  -  {{emp}}</option>
                                         {% endfor %}
                                       </select>
                                       <label for="floatingInputGrid">Release player</label>
@@ -277,7 +277,7 @@
                                       {% csrf_token %}
                                       <select class="form-select" id="floatingSelectGrid" name='select'>
                                         {% for reco in recos %}
-                                            <option name='select' value='{{reco}}'>{{reco.0}} : {{reco.1}}</option>
+                                            <option name='select' value='{{reco.0}},{{reco.1}}'>{{reco.0}}  -  {{reco.1}}</option>
                                         {% endfor %}
                                       </select>
                                       <input class="btn btn-primary" type="submit" value="Pick!">
