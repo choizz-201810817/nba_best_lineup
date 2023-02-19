@@ -185,6 +185,15 @@ def index(request):
             selected = selected.split(',')
             selTeam = selected[0]
             selPly = selected[1]
+            profiles = selPly.split(' ')
+            profiles.reverse()
+            profile = ''
+            for idx in range(len(profiles)):
+                if (idx+1)==len(profiles):
+                    profile = profile+profiles[idx]
+                else:
+                    profile = profile+profiles[idx]+'_'
+            print(profile)
             existObbs, obbsPred = obbsChange(loaded_model, plyDf, teamDf, emplayer, team, selPly, selTeam)
             
             return render(request, "nbais/index_result3.html", {'teams' : [team],
@@ -192,7 +201,8 @@ def index(request):
                                                             'emPlayer' : [emplayer],
                                                             'recos' : [selected],
                                                             'existObbs' : existObbs,
-                                                            'obbsPred' : obbsPred})
+                                                            'obbsPred' : obbsPred,
+                                                            'playerProfile' : profile})
 
     else:
         return render(request, 'nbais/index.html', {'teams' : teams})
