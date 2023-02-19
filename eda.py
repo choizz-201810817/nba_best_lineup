@@ -467,4 +467,33 @@ df = pd.read_csv("./data/1_ply_final.csv")
 
 # %%
 df[df['team']=="Atlanta Hawks"]
+
+# %%
+df = pd.read_csv("./data/NotNull_pev.csv").drop(["index"], axis=1)
+positions = df.position.unique().tolist()
+positions
+
+# %%
+dfs = []
+for pos in positions:
+    tmp = df[(df["position"]==pos)&(df["season"]==2023)].sort_values(by='pev', ascending=False).reset_index(drop=True)
+    tmp1 = tmp.loc[:4,["position","player","team","pev"]]
+    dfs.append(tmp1)
+
+# %%
+top5Df = pd.concat(dfs, axis=0).reset_index(drop=True)
+top5Df["ply_pev"] = top5Df.apply(lambda x: x.player + " " + "-" + " " + str(x.pev), axis=1)
+top5Df = top5Df.drop(["player", "team", "pev"], axis=1)
+top5Df
+# %%
+t5Dfs = []
+for pos in positions:
+    tmp = top5Df[top5Df["position"]==pos].drop(["position"], axis=1).reset_index(drop=True)
+    t5Dfs.append(tmp)
+
+t5Df = pd.concat(t5Dfs, axis=1)
+t5Df.columns = ["PF", "SG", "PG", "SF", "C"]
+t5Df.to_csv("./data/pev_top5.csv")
+# %%
+t5Df
 # %%

@@ -3,8 +3,8 @@ from django.shortcuts import render
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Create your views here.
-from reco_model_mark2 import playerRecommend
-from obbs_pre_module import obbsChange, rmse, trade
+# from reco_model_mark2 import playerRecommend
+# from obbs_pre_module import obbsChange, rmse, trade
 
 import pandas as pd
 import numpy as np
@@ -18,15 +18,6 @@ from keras import backend as K
 import warnings
 warnings.filterwarnings('ignore')
 
-
-
-plyDf = pd.read_csv(f"../data/NotNull_pev.csv").drop(["index"], axis=1)
-teamDf = pd.read_csv("../data/teamObbs.csv").drop(["Unnamed: 0"], axis=1)
-
-hdf5_path = '../model_save/temp/obbs/0214_1247/2438-0.0660.hdf5'
-loaded_model = load_model(hdf5_path, custom_objects={'rmse': rmse})
-
-teams = teamDf.team.unique().tolist()
 
 def totalMeans(df, season=2023):
     positions = df.position.unique()
@@ -150,8 +141,19 @@ def obbsChange(model, playerDf, teamDf, outPlayer='', myTeam='', inPlayer='', op
     # print(f"{myTeam}의 기존 승률 : {existObbs}")
     # print(f"{myTeam}의 트레이드 이후 승률 : {obbsPred}")
 
-    return np.round(existObbs,3), np.round(obbsPred,3)
+    return existObbs, obbsPred
 
+
+plyDf = pd.read_csv(f"../data/NotNull_pev.csv").drop(["index"], axis=1)
+teamDf = pd.read_csv("../data/teamObbs.csv").drop(["Unnamed: 0"], axis=1)
+
+hdf5_path = '../model_save/temp/obbs/0214_1247/2438-0.0660.hdf5'
+loaded_model = load_model(hdf5_path, custom_objects={'rmse': rmse})
+
+teams = teamDf.team.unique().tolist()
+
+
+# html과 연결
 def index(request):
     return render(request, 'nba/index.html')
 

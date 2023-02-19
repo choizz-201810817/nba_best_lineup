@@ -247,38 +247,45 @@
                                           <option name='team' value='{{tmp}}'>{{tmp}}</option>
                                         {% endfor %}
                                       </select>
-                                      <input class="btn btn-primary" type="submit" value="Pick!">
                                       <label for="floatingInputGrid">Choose Team</label>
+                                    </div>
+                                </div>
+                                <div class="col-md">
+                                    <div class="form-floating">
+                                      {% csrf_token %}
+                                      <select class="form-select" id="floatingSelectGrid" name='pos'>
+                                        {% for pos in poses %}
+                                            <option name='pos' value='{{pos}}'>{{pos}}</option>
+                                        {% endfor %}
+                                      </select>
+                                      <label for="floatingInputGrid">Choose Team</label>
+                                    </div>
+                                </div><br><br>
+                                <div class="col-md">
+                                    <div class="form-floating">
+                                      {% csrf_token %}
+                                      <select class="form-select" id="floatingSelectGrid" name="emplayer">
+                                        {% for emp in emPlayer %}
+                                            <option name='emplayer' value='{{emp}}'>{{teams.0}} : {{emp}}</option>
+                                        {% endfor %}
+                                      </select>
+                                      <label for="floatingInputGrid">Release player</label>
+                                    </div>
+                                </div>
+                                <div class="col-md">
+                                    <div class="form-floating">
+                                      {% csrf_token %}
+                                      <select class="form-select" id="floatingSelectGrid" name='select'>
+                                        {% for reco in recos %}
+                                            <option name='select' value='{{reco}}'>{{reco.0}} : {{reco.1}}</option>
+                                        {% endfor %}
+                                      </select>
+                                      <input class="btn btn-primary" type="submit" value="Pick!">
+                                      {% comment %} <button type="button" class="btn btn-sm btn-danger ms-auto" style="font-size: medium;">Click to Change</button> {% endcomment %}
+                                      <label for="floatingInputGrid">Recommend player</label>
                                     </div>
                                   </form>
                                 </div>
-                                <div class="col-md">
-                                    <div class="form-floating">
-                                      <select class="form-select" id="floatingSelectGrid">
-                                        {% for pos in poses %}
-                                          <option name='pos' value='{{pos}}'>{{pos}}</option>
-                                        {% endfor %}
-                                      </select>
-                                      <label for="floatingSelectGrid">Choose Position</label>
-                                    </div>
-                                </div>
-                                        <button type="button" class="btn btn-sm btn-danger ms-auto" style="font-size: medium;">Click to Change</button>
-                                <div class="row g-1">
-                                <div class="col-md">
-                                <div class="form-floating">
-                                    <card class="form-control"
-                                        id="floatingTextarea" style="height: 250px;"></card>
-                                    <label for="floatingTextarea"><h2 style="color: #000; font-size: x-large;">Release Player_방출 선수</h2></label>
-                                </div>
-                                </div>
-                                <div class="col-md">
-                                    <div class="form-floating">
-                                        <card class="form-control" 
-                                            id="floatingTextarea" style="height: 250px;"></card>
-                                        <label for="floatingTextarea"><h2 style="color: #000; font-size: x-large;">New Player_영입 선수</h2></label>
-                                    </div>
-                                </div>
-                              </div>
                               <div class="col-md">
                                 <div class="form-floating">
                                     <card class="form-control" 
