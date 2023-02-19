@@ -1008,7 +1008,12 @@ progress{
 }
 
 @media (min-width: 768px){
-    .col-md{flex:1 0 0%;
+    .btn-md{flex:1 0 100%;
+    }
+}
+
+@media (min-width: 768px){
+    .col-md{flex:1 0 50%;
     }
     .row-cols-md-auto>*{
         flex:0 0 auto;
