@@ -2276,6 +2276,7 @@ progress{
     }
     .form-floating{
         position:relative;
+
     }
     .form-floating>.form-control,.form-floating>.form-select{
         height:calc(3.5rem + 2px);

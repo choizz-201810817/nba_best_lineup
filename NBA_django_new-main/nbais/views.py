@@ -144,10 +144,10 @@ def obbsChange(model, playerDf, teamDf, outPlayer='', myTeam='', inPlayer='', op
     return np.round(existObbs,3), np.round(obbsPred,3)
 
 
-plyDf = pd.read_csv(f"../data/NotNull_pev.csv").drop(["index"], axis=1)
-teamDf = pd.read_csv("../data/teamObbs.csv").drop(["Unnamed: 0"], axis=1)
+plyDf = pd.read_csv(f"data/NotNull_pev.csv").drop(["index"], axis=1)
+teamDf = pd.read_csv("data/teamObbs.csv").drop(["Unnamed: 0"], axis=1)
 
-hdf5_path = '../model_save/temp/obbs/0214_1247/2438-0.0660.hdf5'
+hdf5_path = 'model_save/temp/obbs/0214_1247/2438-0.0660.hdf5'
 loaded_model = load_model(hdf5_path, custom_objects={'rmse': rmse})
 
 teams = teamDf.team.unique().tolist()

@@ -235,7 +235,7 @@
                             <div class="d-flex align-items-center justify-content-between mb-4">
                                 <h5 class="mb-0"><i class="fas fa-id-card-alt"></i>
                                     <span>Choose Player</span></h5> 
-                                    <button type="button" class="btn btn-primary"><g href="">Reset</g></button>
+                                    <button type="button" class="btn btn-primary" onclick="location.href='/'">Reset</button>
                             </div>
                           <form method="POST">
                             <div class="row g-2">
@@ -289,12 +289,12 @@
                                 <div class="btn-md">
                                   <input class="btn btn-primary" type="submit" value="Click To Change!">
                                 </div>
-                              <div class="col-md">
-                                <div class="form-floating">
-                                    <card class="form-control" 
-                                        id="floatingTextarea" style="height: 230px;"></card>
+                              {% comment %} <div class="col-md"> {% endcomment %}
+                                <div class="card">
+                                    {% comment %} <card class="form-control" 
+                                        id="floatingTextarea" style="height: 230px;"></card> {% endcomment %}
                                     <label for="floatingTextarea">
-                                        <h2 style="color: #000; font-size: x-large;">ODDS_승률 변화</h2><br>
+                                        <h2 style="color: #000; font-size: x-large;">ODDS_승률 변화</h2><br><br><br><br><br><br><br><br>
                                         <!-- <h4 style="color: #000; font-size: large;">
                                           <img src="static/img/{{teams.0}}.png" style="width: 150px; height: 90px;"><br><br><br>
                                           {{teams.0}}의 기존 승률 : {{existObbs}}<br>
@@ -302,7 +302,7 @@
                                         </h4> -->
                                     </label>
                                 </div>
-                            </div>
+                            {% comment %} </div> {% endcomment %}
                         </div>
                       </form>
                     </div>
@@ -317,68 +317,118 @@
                                             <span>PEV Top 5</span></h5>
                                     </div>
                                     <div class="table">
-                                        <style type="text/css">
-                                            table {font-size: 13pt;}
-                                        </style>
-                                        <table class="table text-start align-middle table-bordered table-hover mb-0">
-                                            <thead>
-                                                <thead bgcolor="#c81033">
-                                                    <tr class="text-white">
-                                                        <tr> 
-                                                        <th scope="col">Rk / Position</th>
-                                                        <th scope="col">PF</th>
-                                                        <th scope="col">PG</th>
-                                                        <th scope="col">SF</th>
-                                                        <th scope="col">SG</th>
-                                                        <th scope="col">C</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td>#1</td>
-                                                        <!-- <td align="center"></td> 글씨 가운데 정렬 -->
-                                                        <td> HELLO </td>
-                                                        <td>Boston Celtics</td>
-                                                        <td>42-17</td>
-                                                        <td>42-17</td>
-                                                        <td>42-17</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>#2</td>
-                                                        <td> HELLO </td>
-                                                        <td>Milwaukee Bucks</td>
-                                                        <td>40-17</td>
-                                                        <td>42-17</td>
-                                                        <td>42-17</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>#3</td>
-                                                        <td> HELLO </td>
-                                                        <td>Philadelphia 76ers</td>
-                                                        <td>38-19</td>
-                                                        <td>42-17</td>
-                                                        <td>42-17</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>#4</td>
-                                                        <td> HELLO </td>
-                                                        <td>Cleveland Cavaliers</td>
-                                                        <td>38-23</td>
-                                                        <td>42-17</td>
-                                                        <td>42-17</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>#5</td>
-                                                        <td> HELLO </td>
-                                                        <td>Brooklyn Nets</td>
-                                                        <td>34-24</td>
-                                                        <td>42-17</td>
-                                                        <td>42-17</td>
-                                                    </tr>
-                                                </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                                      <style type="text/css">
+                                          table {font-size: 13pt;}
+                                      </style>
+                                      <table class="table text-start align-middle table-bordered table-hover mb-0">
+                                          <thead>
+                                              <thead bgcolor="#c81033">
+                                                  <tr class="text-white">
+                                                      <tr> 
+                                                      <th scope="col">Rk / Position</th>
+                                                      <th scope="col" style="font-size: 15pt;">PG_포인트 가드</th>
+                                                      <th scope="col" style="font-size: 15pt;">SG_슈팅 가드</th>
+                                                      <th scope="col" style="font-size: 15pt;">SF_스몰 포워드</th>
+                                                      <th scope="col" style="font-size: 15pt;">PF_파워 포워드</th>
+                                                      <th scope="col" style="font-size: 15pt;">C_센터</th>
+                                                  </tr>
+                                              </thead>
+                                              <tbody>
+                                                  <tr>
+                                                      <td>#1</td>
+                                                      <!-- <td align="center"></td> 글씨 가운데 정렬 -->
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1629630/ja-morant">
+                                                        <img src="static/img/Ja Morant.png" style="height: 80px; width: 90px;"></a> 
+                                                        Ja Morant / 2.03 </td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1631199/ron-harper-jr">
+                                                        <img src="static/img/Ron Harper Jr..png" style="height: 80px; width: 90px;"></a> 
+                                                        Ron Harper Jr. / 2.04</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1631205/buddy-boeheim">
+                                                        <img src="static/img/Buddy Boeheim.png" style="height: 80px; width: 90px;"></a> 
+                                                        Buddy Boeheim / 2.08 </td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1629627/zion-williamson">
+                                                        <img src="static/img/Zion Williamson.png" style="height: 80px; width: 90px;"></a> 
+                                                        Zion Williamson / 1.99 </td>                                               
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1628389/bam-adebayo">
+                                                        <img src="static/img/Bam Adebayo.png" style="height: 80px; width: 90px;"></a> 
+                                                        Boban Marjanovic / 1.82 </td>
+                                                  </tr>
+                                                  <tr>
+                                                    <td>#2</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1629027/trae-young/rotowire" style="color:#000; font-size: 9pt; font-weight: bolder;">
+                                                        <img src="static/img/Trae Young.png" style="height: 80px; width: 90px;"></a>
+                                                        Trae Young / 1.95</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1630648/jordan-schakel" style="color:#000; font-size: 9pt; font-weight: bolder;">
+                                                        <img src="static/img/Jordan Schakel.png" style="height: 80px; width: 90px;"></a>
+                                                        Jordan Schakel / 2.01</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1629126/deonte-burton" style="color:#000; font-size: 9pt; font-weight: bolder;">
+                                                        <img src="static/img/Deonte Burton.png" style="height: 80px; width: 90px;"></a>
+                                                        Deonte Burton / 1.91</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/203507/giannis-antetokounmpo">
+                                                        <img src="static/img/Giannis Antetokounmpo.png" style="height: 80px; width: 90px;"></a> 
+                                                        Giannis Antetokounmpo/ 1.96 </td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/203999/nikola-jokic" style="color:#000; font-size: 9pt; font-weight: bolder;">
+                                                        <img src="static/img/Nikola Jokic.png" style="height: 80px; width: 90px;"></a>
+                                                        Nikola Jokic / 1.82 </td>
+                                                  </tr>
+                                                  <tr>
+                                                      <td>#3</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1630169/tyrese-haliburton">
+                                                        <img src="static/img/Tyrese Haliburton.png" style="height: 80px; width: 90px;"></a>
+                                                        Tyrese Haliburton / 1.95</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1628416/tyler-dorsey">
+                                                        <img src="static/img/Tyler Dorsey.png" style="height: 80px; width: 90px;"></a>
+                                                        Tyler Dorsey / 1.99</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1630600/isaiah-mobley">
+                                                        <img src="static/img/Isaiah Mobley.png" style="height: 80px; width: 90px;"></a>
+                                                        Isaiah Mobley / 1.9</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/203932/aaron-gordon">
+                                                        <img src="static/img/Aaron Gordon.png" style="height: 80px; width: 90px;"></a>
+                                                        Aaron Gordon / 1.93</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1628386/jarrett-allen">
+                                                        <img src="static/img/Jarrett Allen.png" style="height: 80px; width: 90px;"></a>
+                                                        Jarrett Allen / 1.77</td>
+                                                  </tr>
+                                                  <tr>
+                                                      <td>#4</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1626145/tyus-jones">
+                                                        <img src="static/img/Tyus Jones.png" style="height: 80px; width: 90px;"></a>
+                                                        Tyus Jones / 1.94</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1630162/anthony-edwards/rotowire">
+                                                        <img src="static/img/Anthony Edwards.png" style="height: 80px; width: 90px;"></a>
+                                                        Anthony Edwards / 1.94</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1628369/jayson-tatum">
+                                                        <img src="static/img/Jayson Tatum.png" style="height: 80px; width: 90px;"></a>
+                                                        Jayson Tatum / 1.83</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/201142/kevin-durant">
+                                                        <img src="static/img/Kevin Durant.png" style="height: 80px; width: 90px;"></a>
+                                                        Kevin Durant / 1.91</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1628389/bam-adebayo">
+                                                        <img src="static/img/Bam Adebayo.png" style="height: 80px; width: 90px;"></a>
+                                                        Bam Adebayo / 1.77</td>
+                                                  </tr>
+                                                  <tr>
+                                                      <td>#5</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1627750/jamal-murray">
+                                                        <img src="static/img/Jamal Murray.png" style="height: 80px; width: 90px;"></a>
+                                                        Jamal Murray / 1.92</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1628378/donovan-mitchell">
+                                                        <img src="static/img/Donovan Mitchell.png" style="height: 80px; width: 90px;"></a>
+                                                        Donovan Mitchell / 1.93</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/2544/lebron-james">
+                                                        <img src="static/img/LeBron James.png" style="height: 80px; width: 90px;"></a>
+                                                        LeBron James / 1.83</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/1628374/lauri-markkanen">
+                                                        <img src="static/img/Lauri Markkanen.png" style="height: 80px; width: 90px;"></a>
+                                                        Lauri Markkanen / 1.9</td>
+                                                      <td style="white-space: nowrap; font-size: 11pt;"><a class="btn btn-sm btn-success" href="https://www.nba.com/player/203954/joel-embiid">
+                                                        <img src="static/img/Joel Embiid.png" style="height: 80px; width: 90px;"></a>
+                                                        Joel Embiid / 1.75</td>
+                                                  </tr>
+                                              </tbody>
+                                      </table>
+                                  </div>
+                              </div>
                                     <!-- <canvas id="worldwide-sales"></canvas> -->
                                 
                             </div>
