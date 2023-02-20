@@ -179,7 +179,7 @@ def index(request):
                                                             'recos' : recos})
             
         elif (len(pos)>=1)&(len(selected)>=1):
-            print(selected)
+            # print(selected)
             # table = str.maketrans("[' ]", '    ')
             # selected = selected.translate(table)
             selected = selected.split(',')
@@ -193,7 +193,7 @@ def index(request):
                     profile = profile+profiles[idx]
                 else:
                     profile = profile+profiles[idx]+'_'
-            print(profile)
+            # print(profile)
             existObbs, obbsPred = obbsChange(loaded_model, plyDf, teamDf, emplayer, team, selPly, selTeam)
             
             return render(request, "nbais/index_result3.html", {'teams' : [team],

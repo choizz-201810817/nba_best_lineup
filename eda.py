@@ -164,7 +164,7 @@ for key in teamKeys:
 
 #%%
 plyDf = pd.read_csv(f"./data/ply_final.csv").drop(['Unnamed: 0'], axis=1)
-plyDf.columns = plyDf.columns.str.replace('\n', '_')
+plyDf.columns = plyDf.columns.str.replace('\r\n', '_')
 plyDf.columns = plyDf.columns.str.replace(' _', '_')
 plyDf.columns = plyDf.columns.str.replace(' ', '_')
 plyDf.columns.tolist()
@@ -183,6 +183,9 @@ plyDf.loc[plyDf.position=='G',"position"] = plyDf[plyDf.position=='G'].apply(lam
 plyDf.loc[plyDf.position=='F',"position"] = plyDf[plyDf.position=='F'].apply(lambda x: 'SF' if x.height<204 else 'PF', axis=1)
 plyDf.loc[plyDf.position=='GF',"position"] = 'SF'
 plyDf
+
+#%%
+plyDf.columns.tolist()
 
 #%%
 # posiotion이 결측치로 나온 선수 "Eddy Curry"는 C position으로 뛰었음.
@@ -243,7 +246,6 @@ xgb = XGBRegressor()
 lgbm = LGBMRegressor()
 
 models = [rfRg, lnRg, xgb, lgbm]
-
 for model in models:
     modelName = model.__class__.__name__
     mses = []
@@ -251,8 +253,9 @@ for model in models:
         X_set = mmDfs[key].drop(['obbs', 'position'], axis=1)
         y_set = mmDfs[key].obbs
 
-        X_train, X_test, y_train, y_test = train_test_split(X_set, y_set, test_size=.25)
-            
+        X_train, X_test, y_train, y_test = train_test_split(X_set, 
+                                                            y_set, 
+                                                            test_size=.25)
         model.fit(X_train, y_train)
         pred = model.predict(X_test)
         mse = mean_squared_error(y_test, pred)
@@ -381,13 +384,13 @@ xgb = XGBRegressor()
 lgbm = LGBMRegressor()
 
 models = [rfRg, lnRg, xgb, lgbm]
-
 for model in models:
     modelName = model.__class__.__name__
     X_set = mmNonCorrDf1.drop(['+/-', 'position'], axis=1)
     y_set = mmNonCorrDf1['+/-']
-    X_train, X_test, y_train, y_test = train_test_split(X_set, y_set, test_size=0.25, random_state=25)
-    
+    X_train, X_test, y_train, y_test = train_test_split(X_set, 
+                                                        y_set, 
+                                                        test_size=0.25)
     model.fit(X_train, y_train)
     pred = model.predict(X_test)
     rmse = np.round(np.sqrt(mean_squared_error(y_test, pred)), 4)
@@ -428,7 +431,11 @@ params = {"learning_rate" : [0.001, 0.01, 0.1, 0.3, 0.5],
           "max_depth" : [25, 50, 75],
           "n_estimators" : [100, 300, 500]}
 
-gscv = GridSearchCV(estimator=model, param_grid=params, scoring='neg_mean_squared_error', cv=3, verbose=2)
+gscv = GridSearchCV(estimator=model, 
+                    param_grid=params, 
+                    scoring='neg_mean_squared_error', 
+                    cv=3, 
+                    verbose=2)
 gscv.fit(X, y)
 
 # %%
