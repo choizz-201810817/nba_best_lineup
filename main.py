@@ -21,15 +21,21 @@ hdf5_path = './model_save/temp/obbs/0214_1247/2438-0.0660.hdf5'
 loaded_model = load_model(hdf5_path, custom_objects={'rmse': rmse})
 
 # %%
+
+
 # Los Angeles Lakers
 team=input('원하는 팀을 입력하십시오 : ')
 emissionPlyer, recoList = playerRecommend(df=plyDf, team=team)
 
+
 emPly = emissionPlyer.player.values[0]
 print(f"방출 대상 선수 : {team}의 {emPly}\n\n")
 
+
 for i, (recoTeam, recoPly) in enumerate(zip(recoList.team, recoList.player)):
     print(f"영입 추천 선수 {i+1} : {recoTeam}의 {recoPly}")
+
+
 
 #%%
 myTeam="Los Angeles Lakers"
