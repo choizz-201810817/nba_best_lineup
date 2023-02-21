@@ -91,8 +91,8 @@ print("y_val's shape :", y_val.shape)
 
 # %%
 # 포지션 분류 모델 설계
-
-def posClassifierModel(X_train, y_train, X_val, y_val, HIDDEN_UNITS, INPUT_DIM, EPOCHS, opti, lossFunc, NORM, NUM_CLASSES, BATCH_SIZE, INITIALIZER, checkpoint):
+def posClassifierModel(X_train, y_train, X_val, y_val, HIDDEN_UNITS, INPUT_DIM, EPOCHS, opti, lossFunc, 
+                       NORM, NUM_CLASSES, BATCH_SIZE, INITIALIZER, checkpoint):
     model = Sequential()
     model.add(Dense(HIDDEN_UNITS, input_dim=INPUT_DIM, activation='relu', kernel_initializer=INITIALIZER))
     model.add(Dropout(0.1))
@@ -123,7 +123,8 @@ INPUT_DIM = 16
 INITIALIZER = HeNormal()
 
 save_path = './model_save/'+'{epoch:03d}-{val_accuracy:.4f}.hdf5'
-checkpoint = ModelCheckpoint(filepath=save_path, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
+checkpoint = ModelCheckpoint(filepath=save_path, monitor='val_accuracy', verbose=1, 
+                             save_best_only=True, mode='max')
 
 model, history = posClassifierModel(X_train, y_train, X_val, y_val, HIDDEN_UNITS, INPUT_DIM, 
                                     EPOCHS, opti, lossFunc, NORM, NUM_CLASSES, BATCH_SIZE, 
@@ -175,5 +176,15 @@ df
 df.to_csv("./data/nonCorrAllPos.csv")
 
 # %%
-df.position.isna().sum()
+# 모델 평가 (validation data로 accuracy 계산)
+preds = loaded_model.predict(X_val)
+predictions = []
+for pred in preds:
+    predictions.append(np.argmax(pred))
+
+val_acc = accuracy_score(y_val, predictions)
+
+print(f"model's accuracy of validation : {val_acc}")
+
+
 # %%

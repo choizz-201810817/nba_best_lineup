@@ -11,24 +11,19 @@ import pandas as pd
 # %%
 def totalMeans(df, season=2023):
     positions = df.position.unique()
-
     posMeans = {}
     for pos in positions:
         posMean = df[(df['position']==pos)&(df['season']==season)].pev.mean()
         posMeans[pos] = posMean
-
     return posMeans
-
 
 def teamMeans(df, team='', season=2023):
     tempDf = df[(df.team==team)&(df.season==season)]
     positions = tempDf.position.unique()
-
     posMeans = {}
     for pos in positions:
         posMean = tempDf[tempDf['position']==pos].pev.mean()
         posMeans[pos] = posMean
-        
     return posMeans
 
 
@@ -44,7 +39,6 @@ def compareMeans(df, team='', season=2023):
     
     sortedPos = sorted(posDict.items(), key=lambda item: item[1])    
     positions = [pos[0] for pos in sortedPos]
-    
     return positions
 
 
@@ -58,10 +52,6 @@ def playerRecommend(df, team='', season=2023, margin=0.2, threshold=0.99):
     ## 방출 대상 포지션의 선수목록 추출
     emissionDf = df[(df['team']==team)&(df['position']==pos)&(df['season']==season)]
 
-    ## 방출 대상 포지션의 스탯들의 평균값 도출
-    means = emissionDf.mean()
-    meanDf = pd.DataFrame(means).T
-
     ## 방출 대상 선수 선정 (해당 포지션에서 pev가 가장 낮은 선수)
     emissionDf = emissionDf.sort_values(by='pev', ascending=True).reset_index(drop=True)
     emissionPlayer = emissionDf.iloc[[0],:]
@@ -74,7 +64,12 @@ def playerRecommend(df, team='', season=2023, margin=0.2, threshold=0.99):
     ## 특정팀 외의 선수들 중 방출 대상 선수와 같은 포지션이면서 연봉 20% 이내의 선수들 불러오기
     targetPlysDf = df.drop(df[df.team==team].index, axis=0)
     targetPlysDf = targetPlysDf[(targetPlysDf['season']==season)&(targetPlysDf['position']==pos)
-                                &(targetPlysDf['inflation_salary']<=maxSal)&(targetPlysDf['inflation_salary']>=minSal)]
+                                &(targetPlysDf['inflation_salary']<=maxSal)&
+                                (targetPlysDf['inflation_salary']>=minSal)]
+    
+    ## 방출 대상 포지션의 스탯들의 평균값 도출
+    means = emissionDf.mean()
+    meanDf = pd.DataFrame(means).T
     
     ## 트레이드 대상 포지션의 평균값과 targetPlyDf를 concat
     targetPlysDf1 = targetPlysDf[meanDf.columns]

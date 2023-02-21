@@ -28,7 +28,7 @@ warnings.filterwarnings('ignore')
 teamDf = pd.read_csv("./data/teamObbs.csv").drop(["Unnamed: 0"], axis=1)
 # teamDf.season = teamDf.season.astype("str")
 
-plyDf = pd.read_csv("./data/NotNull.csv").drop(["Unnamed: 0", "inflation_salary", "obbs", "pev"], axis=1)
+plyDf = pd.read_csv("./data/NotNull_pev.csv").drop(["index", "inflation_salary", "obbs", "pev"], axis=1)
 
 #%%
 tempDf = plyDf.drop(["player", "team", "season", "position"], axis=1)
@@ -58,7 +58,7 @@ for season in plyDf.season.unique():
             
 # %%
 # 데이터셋 생성
-pd.set_option('display.max_rows', 10)
+pd.set_option('display.max_rows', None)
 teamDfs = []
 for season in plyDf.season.unique():
     for team in plyDf.team.unique():
